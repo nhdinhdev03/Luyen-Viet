@@ -60,6 +60,8 @@
       /* Smooth Caret Effect (Monkeytype style) */
       #smooth-caret {
         position: absolute;
+        top: 0;
+        left: 0;
         width: 2.5px;
         background-color: #3b82f6;
         border-radius: 1px;
@@ -153,7 +155,7 @@
       .word-wrapper {
         display: inline-block;
         padding: 1px 3px;
-        margin: 0 2px;
+        margin: 2px 1px;
         border-radius: 6px;
         transition:
           background-color 0.15s ease,
@@ -170,6 +172,8 @@
       /* Floating Meaning Pill */
       #floating-word-pill {
         position: absolute;
+        top: 0;
+        left: 0;
         transform: translate(-50%, -100%);
         transition:
           left 120ms cubic-bezier(0.2, 0.8, 0.2, 1),
@@ -413,7 +417,7 @@
         class="relative bg-white dark:bg-slate-800/90 rounded-3xl border border-slate-200 dark:border-slate-700/80 p-6 sm:p-10 shadow-sm min-h-[280px] flex flex-col justify-between overflow-hidden cursor-text"
       >
         <!-- Sentence Stepper Header -->
-        <div class="flex items-center justify-between gap-4 mb-4">
+        <div class="flex items-center justify-between gap-4 mb-6">
           <div
             id="sentence-step-badge"
             class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-slate-100 dark:bg-slate-700/60 rounded-full text-xs text-slate-600 dark:text-slate-300 font-semibold border border-slate-200/50 dark:border-slate-700/40"
@@ -480,7 +484,7 @@
         <!-- Text Display Area (Pre-rendered Spans for zero layout reflows) -->
         <div
           id="essay-display"
-          class="relative z-10 font-mono text-xl sm:text-2xl sm:leading-relaxed tracking-wide select-none outline-none break-words my-auto py-2"
+          class="relative z-10 font-mono text-xl sm:text-2xl sm:leading-relaxed tracking-wide select-none outline-none break-words my-auto py-4"
         >
           <!-- Dynamically populated DOM spans -->
         </div>
@@ -1057,7 +1061,19 @@
 
         loadEssayObject(state.savedEssays[0]);
         updateThemeFromSystem();
+
         window.addEventListener("resize", updateCaretAndPillPosition);
+        window.addEventListener("scroll", updateCaretAndPillPosition, {
+          passive: true,
+        });
+
+        if ("ResizeObserver" in window) {
+          const ro = new ResizeObserver(() => {
+            requestAnimationFrame(updateCaretAndPillPosition);
+          });
+          ro.observe(el.display);
+          ro.observe(el.wrapper);
+        }
       }
 
       function loadSavedEssaysFromStorage() {
@@ -1213,7 +1229,6 @@
                 sentIndex === state.currentSentenceIndex;
 
               if (isCurrentActiveSentence) {
-                const globalCharIdx = state.flatChars.length;
                 state.flatChars.push({
                   char: targetChar,
                   sentIndex,
@@ -1231,9 +1246,9 @@
 
             sentenceBlock.appendChild(wordWrapper);
 
-            // Space separator
+            // Use a normal breakable space so words wrap naturally across lines
             const spaceSpan = document.createElement("span");
-            spaceSpan.innerHTML = "&nbsp;";
+            spaceSpan.textContent = " ";
             sentenceBlock.appendChild(spaceSpan);
           });
 
@@ -1295,36 +1310,29 @@
 
       /**
        * SMOOTH MONKEYTYPE CARET & FLOATING PILL POSITIONING
+       * Reads coordinates directly from the HTML character span on screen
        */
       function updateCaretAndPillPosition() {
         if (state.flatChars.length === 0) return;
 
-        const displayRect = el.display.getBoundingClientRect();
-        let targetSpan = null;
+        const isAtEnd = state.currentCharIndex >= state.flatChars.length;
+        const targetItem = isAtEnd
+          ? state.flatChars[state.flatChars.length - 1]
+          : state.flatChars[state.currentCharIndex];
 
-        if (state.currentCharIndex < state.flatChars.length) {
-          targetSpan = state.flatChars[state.currentCharIndex].domSpan;
-        } else {
-          // End of sentence: position after last character
-          targetSpan = state.flatChars[state.flatChars.length - 1].domSpan;
-        }
+        if (!targetItem || !targetItem.domSpan) return;
 
-        if (!targetSpan) return;
-
+        const targetSpan = targetItem.domSpan;
         const spanRect = targetSpan.getBoundingClientRect();
         const wrapperRect = el.wrapper.getBoundingClientRect();
 
-        let caretLeft = 0;
-        let caretTop = 0;
+        // Origin of #typing-wrapper's padding box on screen
+        const originLeft = wrapperRect.left + el.wrapper.clientLeft;
+        const originTop = wrapperRect.top + el.wrapper.clientTop;
 
-        if (state.currentCharIndex < state.flatChars.length) {
-          caretLeft = spanRect.left - wrapperRect.left;
-          caretTop = spanRect.top - wrapperRect.top;
-        } else {
-          caretLeft = spanRect.right - wrapperRect.left;
-          caretTop = spanRect.top - wrapperRect.top;
-        }
-
+        const caretLeft =
+          (isAtEnd ? spanRect.right : spanRect.left) - originLeft;
+        const caretTop = spanRect.top - originTop;
         const caretHeight = spanRect.height || 32;
 
         // Apply 60FPS CSS Transform Matrix on Smooth Caret
@@ -1335,9 +1343,19 @@
         const activeWordWrapper = targetSpan.closest(".word-wrapper");
         if (activeWordWrapper) {
           const wordRect = activeWordWrapper.getBoundingClientRect();
-          const pillLeft =
-            wordRect.left + wordRect.width / 2 - wrapperRect.left;
-          const pillTop = wordRect.top - wrapperRect.top - 8;
+          const pillWidth = el.floatingPill.offsetWidth || 120;
+          const wrapperInnerWidth = el.wrapper.clientWidth;
+
+          let pillLeft = wordRect.left + wordRect.width / 2 - originLeft;
+          // Clamp horizontally so the pill never overflows left/right edges when lines wrap
+          const minLeft = pillWidth / 2 + 12;
+          const maxLeft = Math.max(
+            minLeft,
+            wrapperInnerWidth - pillWidth / 2 - 12,
+          );
+          pillLeft = Math.min(Math.max(pillLeft, minLeft), maxLeft);
+
+          const pillTop = wordRect.top - originTop - 6;
 
           el.floatingPill.style.left = `${pillLeft}px`;
           el.floatingPill.style.top = `${pillTop}px`;
@@ -1345,7 +1363,7 @@
 
           // Highlight active word container
           document
-            .querySelectorAll(".word-wrapper")
+            .querySelectorAll(".word-wrapper.active-word")
             .forEach((w) => w.classList.remove("active-word"));
           activeWordWrapper.classList.add("active-word");
         }
@@ -1451,6 +1469,7 @@
             wObj.isRevealed = true;
             updateCharSpansVisuals();
             updateWordRecognitionCard();
+            requestAnimationFrame(updateCaretAndPillPosition);
           });
 
           el.wordsBreakdownContainer.appendChild(chip);
@@ -1473,11 +1492,25 @@
         const curCharItem = state.flatChars[state.currentCharIndex];
         if (!curCharItem) return;
 
+        // Ignore natural Space key press right between words
+        if (
+          typedKey === " " &&
+          curCharItem.charIndex === 0 &&
+          state.currentCharIndex > 0
+        ) {
+          return;
+        }
+
         // Auto-advance non-word punctuation
         if (!curCharItem.isWord) {
+          curCharItem.domSpan.innerText = curCharItem.char;
+          curCharItem.domSpan.className =
+            "char-span font-mono font-medium char-correct";
           advanceCharPosition();
-          // Recursively process key
-          handleKeyInput(typedKey);
+          // Recursively process key if sentence hasn't ended
+          if (state.currentCharIndex > 0 && !state.isCompleted) {
+            handleKeyInput(typedKey);
+          }
           return;
         }
 
@@ -1539,7 +1572,7 @@
         }
 
         updateWordRecognitionCard();
-        updateCaretAndPillPosition();
+        requestAnimationFrame(updateCaretAndPillPosition);
       }
 
       function handleBackspace() {
@@ -1548,10 +1581,6 @@
         state.currentCharIndex--;
         const prevCharItem = state.flatChars[state.currentCharIndex];
         if (prevCharItem) {
-          const wordObj =
-            state.sentences[state.currentSentenceIndex].words[
-              prevCharItem.wordIndex
-            ];
           prevCharItem.domSpan.className = "char-span font-mono font-medium";
 
           if (state.mode === "mask") {
@@ -1572,12 +1601,24 @@
 
         updateMetrics();
         updateWordRecognitionCard();
-        updateCaretAndPillPosition();
+        requestAnimationFrame(updateCaretAndPillPosition);
       }
 
       function advanceCharPosition() {
         state.currentCharIndex++;
         updateMetrics();
+
+        // Automatically consume trailing punctuation at end of words/sentences
+        while (
+          state.currentCharIndex < state.flatChars.length &&
+          !state.flatChars[state.currentCharIndex].isWord
+        ) {
+          const punctItem = state.flatChars[state.currentCharIndex];
+          punctItem.domSpan.innerText = punctItem.char;
+          punctItem.domSpan.className =
+            "char-span font-mono font-medium char-correct";
+          state.currentCharIndex++;
+        }
 
         const nextCharItem = state.flatChars[state.currentCharIndex];
         if (nextCharItem) {
@@ -1673,6 +1714,7 @@
           updateMetrics();
           updateCharSpansVisuals();
           updateWordRecognitionCard();
+          requestAnimationFrame(updateCaretAndPillPosition);
         }
       }
 
@@ -1704,9 +1746,22 @@
             state.currentCharIndex++;
           }
 
+          // Consume trailing punctuation
+          while (
+            state.currentCharIndex < state.flatChars.length &&
+            !state.flatChars[state.currentCharIndex].isWord
+          ) {
+            const punct = state.flatChars[state.currentCharIndex];
+            punct.domSpan.innerText = punct.char;
+            punct.domSpan.className =
+              "char-span font-mono font-medium char-correct";
+            state.currentCharIndex++;
+          }
+
           const nextCharItem = state.flatChars[state.currentCharIndex];
           if (nextCharItem) {
             state.currentWordIndex = nextCharItem.wordIndex;
+            renderSentenceWordsBreakdown();
           } else {
             finishCurrentSentence();
             return;
@@ -1714,7 +1769,7 @@
 
           updateMetrics();
           updateWordRecognitionCard();
-          updateCaretAndPillPosition();
+          requestAnimationFrame(updateCaretAndPillPosition);
         }
       }
 
@@ -1851,6 +1906,7 @@
             currentSentence.words[state.currentWordIndex].isRevealed = true;
             updateCharSpansVisuals();
             updateWordRecognitionCard();
+            requestAnimationFrame(updateCaretAndPillPosition);
           }
         });
 
@@ -1931,6 +1987,7 @@
 
         updateCharSpansVisuals();
         updateWordRecognitionCard();
+        requestAnimationFrame(updateCaretAndPillPosition);
       }
 
       function setErrMode(errModeName) {
@@ -2009,7 +2066,7 @@
 
       function renderSavedEssaysList() {
         el.essaySavedList.innerHTML = "";
-        state.savedEssays.forEach((essay, idx) => {
+        state.savedEssays.forEach((essay) => {
           const btn = document.createElement("button");
           btn.className =
             "px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-bold hover:border-indigo-500 transition flex items-center gap-2";
