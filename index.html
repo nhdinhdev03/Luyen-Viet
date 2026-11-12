@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="vi" class="h-full">
+<html lang="vi" class="h-full antialiased">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -11,9 +11,9 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
-    <!-- Google Fonts Inter & JetBrains Mono & Plus Jakarta Sans -->
+    <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
     <link
-      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
 
@@ -23,17 +23,21 @@
         theme: {
           extend: {
             fontFamily: {
-              sans: ["Plus Jakarta Sans", "sans-serif"],
+              sans: ["Plus Jakarta Sans", "system-ui", "sans-serif"],
               mono: ["JetBrains Mono", "monospace"],
             },
             colors: {
               brand: {
-                50: "#f0f7ff",
-                100: "#e0effe",
-                500: "#3b82f6",
-                600: "#2563eb",
-                700: "#1d4ed8",
+                50: "#eef2ff",
+                100: "#e0e7ff",
+                500: "#6366f1",
+                600: "#4f46e5",
+                700: "#4338ca",
               },
+            },
+            boxShadow: {
+              soft: "0 2px 15px -3px rgba(15, 23, 42, 0.04), 0 4px 6px -4px rgba(15, 23, 42, 0.02)",
+              glow: "0 0 20px -5px rgba(99, 102, 241, 0.35)",
             },
           },
         },
@@ -41,7 +45,7 @@
     </script>
 
     <style>
-      /* Custom scrollbar */
+      /* Custom thin scrollbar */
       ::-webkit-scrollbar {
         width: 6px;
         height: 6px;
@@ -51,32 +55,70 @@
       }
       ::-webkit-scrollbar-thumb {
         background: #cbd5e1;
-        border-radius: 3px;
+        border-radius: 9999px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #94a3b8;
       }
       .dark ::-webkit-scrollbar-thumb {
+        background: #334155;
+      }
+      .dark ::-webkit-scrollbar-thumb:hover {
         background: #475569;
       }
 
-      /* Smooth Caret Effect (Monkeytype style) */
+      /* Subtle background ambient lighting */
+      .bg-saas-mesh {
+        background-image:
+          radial-gradient(
+            at 15% 0%,
+            rgba(99, 102, 241, 0.06) 0px,
+            transparent 50%
+          ),
+          radial-gradient(
+            at 85% 0%,
+            rgba(59, 130, 246, 0.05) 0px,
+            transparent 50%
+          );
+      }
+      .dark .bg-saas-mesh {
+        background-image:
+          radial-gradient(
+            at 15% 0%,
+            rgba(99, 102, 241, 0.12) 0px,
+            transparent 55%
+          ),
+          radial-gradient(
+            at 85% 0%,
+            rgba(56, 189, 248, 0.06) 0px,
+            transparent 50%
+          );
+      }
+
+      /* Smooth Caret Effect (60FPS Monkeytype style) */
       #smooth-caret {
         position: absolute;
         top: 0;
         left: 0;
         width: 2.5px;
-        background-color: #3b82f6;
-        border-radius: 1px;
+        background-color: #4f46e5;
+        border-radius: 9999px;
         pointer-events: none;
         transition:
-          transform 80ms cubic-bezier(0.22, 1, 0.36, 1),
-          height 80ms ease,
+          transform 75ms cubic-bezier(0.22, 1, 0.36, 1),
+          height 75ms ease,
           opacity 150ms ease;
-        box-shadow: 0 0 10px rgba(59, 130, 246, 0.7);
+        box-shadow:
+          0 0 10px rgba(79, 70, 229, 0.7),
+          0 0 3px rgba(79, 70, 229, 0.9);
         z-index: 20;
       }
 
       .dark #smooth-caret {
-        background-color: #60a5fa;
-        box-shadow: 0 0 12px rgba(96, 165, 250, 0.8);
+        background-color: #818cf8;
+        box-shadow:
+          0 0 14px rgba(129, 140, 248, 0.85),
+          0 0 4px rgba(129, 140, 248, 1);
       }
 
       @keyframes caret-pulse {
@@ -85,7 +127,7 @@
           opacity: 1;
         }
         50% {
-          opacity: 0.3;
+          opacity: 0.25;
         }
       }
 
@@ -102,19 +144,25 @@
           background-color 0.1s ease,
           border-color 0.1s ease;
         border-bottom: 2px solid transparent;
+        border-radius: 2px;
       }
 
       .char-correct {
-        color: #10b981 !important; /* Emerald green */
+        color: #059669 !important; /* Emerald 600 */
       }
       .dark .char-correct {
-        color: #34d399 !important;
+        color: #34d399 !important; /* Emerald 400 */
       }
 
       .char-wrong {
-        color: #ef4444 !important; /* Red */
-        background-color: rgba(239, 68, 68, 0.15);
+        color: #ef4444 !important;
+        background-color: rgba(239, 68, 68, 0.14);
         border-bottom-color: #ef4444;
+      }
+      .dark .char-wrong {
+        color: #f87171 !important;
+        background-color: rgba(239, 68, 68, 0.22);
+        border-bottom-color: #f87171;
       }
 
       .char-shake {
@@ -143,30 +191,40 @@
       }
 
       .char-hinted {
-        color: #f59e0b !important; /* Amber */
+        color: #d97706 !important;
         font-weight: 700;
         animation: pulse 1.5s infinite;
+      }
+      .dark .char-hinted {
+        color: #fbbf24 !important;
       }
 
       .char-masked-hint {
         color: #94a3b8;
+        opacity: 0.65;
+      }
+      .dark .char-masked-hint {
+        color: #475569;
+        opacity: 0.85;
       }
 
       .word-wrapper {
         display: inline-block;
-        padding: 1px 3px;
+        padding: 2px 4px;
         margin: 2px 1px;
-        border-radius: 6px;
+        border-radius: 8px;
         transition:
           background-color 0.15s ease,
           box-shadow 0.15s ease;
       }
 
       .word-wrapper.active-word {
-        background-color: rgba(59, 130, 246, 0.1);
+        background-color: rgba(99, 102, 241, 0.09);
+        box-shadow: inset 0 0 0 1px rgba(99, 102, 241, 0.2);
       }
       .dark .word-wrapper.active-word {
-        background-color: rgba(59, 130, 246, 0.2);
+        background-color: rgba(99, 102, 241, 0.18);
+        box-shadow: inset 0 0 0 1px rgba(129, 140, 248, 0.3);
       }
 
       /* Floating Meaning Pill */
@@ -174,293 +232,407 @@
         position: absolute;
         top: 0;
         left: 0;
-        transform: translate(-50%, -100%);
+        transform: translate(-50%, -108%);
         transition:
-          left 120ms cubic-bezier(0.2, 0.8, 0.2, 1),
-          top 120ms cubic-bezier(0.2, 0.8, 0.2, 1),
+          left 110ms cubic-bezier(0.2, 0.8, 0.2, 1),
+          top 110ms cubic-bezier(0.2, 0.8, 0.2, 1),
           opacity 150ms ease;
         pointer-events: none;
         z-index: 30;
         white-space: nowrap;
       }
+
+      #floating-word-pill::after {
+        content: "";
+        position: absolute;
+        bottom: -4px;
+        left: 50%;
+        transform: translateX(-50%) rotate(45deg);
+        width: 8px;
+        height: 8px;
+        background: inherit;
+        border-right: 1px solid rgba(99, 102, 241, 0.35);
+        border-bottom: 1px solid rgba(99, 102, 241, 0.35);
+      }
+
+      /* Segmented Control Active States */
+      .mode-btn.active,
+      .err-mode-btn.active,
+      .view-btn.active {
+        background-color: #ffffff;
+        color: #0f172a;
+        box-shadow:
+          0 1px 3px 0 rgba(15, 23, 42, 0.08),
+          0 1px 2px -1px rgba(15, 23, 42, 0.06);
+      }
+      .dark .mode-btn.active,
+      .dark .err-mode-btn.active,
+      .dark .view-btn.active {
+        background-color: #334155;
+        color: #f8fafc;
+        box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
+      }
     </style>
   </head>
   <body
-    class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans transition-colors duration-200 select-none"
+    class="bg-[#f8fafc] dark:bg-[#0b0f19] bg-saas-mesh text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans transition-colors duration-200 select-none"
   >
-    <!-- Top Navigation Bar -->
+    <!-- Top SaaS Navigation Bar -->
     <header
-      class="bg-white dark:bg-slate-800/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700/60 sticky top-0 z-40 shadow-sm"
+      class="bg-white/85 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80 sticky top-0 z-40 transition-colors"
     >
       <div
-        class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4"
+        class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3"
       >
-        <!-- App Identity & Essay Switcher -->
-        <div class="flex items-center gap-3">
+        <!-- Brand Identity -->
+        <div class="flex items-center gap-3.5 min-w-0">
           <div
-            class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-blue-600 to-indigo-700 flex items-center justify-center text-white shadow-md shadow-indigo-500/20"
+            class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-indigo-600 to-blue-600 flex items-center justify-center text-white shadow-md shadow-indigo-500/25 ring-1 ring-white/20 shrink-0"
           >
-            <i class="fa-solid fa-keyboard text-lg"></i>
+            <i class="fa-solid fa-keyboard text-base"></i>
           </div>
-          <div>
+          <div class="truncate">
             <div class="flex items-center gap-2">
               <h1
-                class="text-base font-bold text-slate-900 dark:text-white leading-tight"
+                class="text-sm sm:text-base font-bold text-slate-900 dark:text-white tracking-tight truncate"
               >
                 Luyện Essay Tiếng Anh
               </h1>
               <span
-                class="text-[10px] font-bold uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full"
-                >60 FPS Engine</span
+                class="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 border border-indigo-200/60 dark:border-indigo-500/30 px-2 py-0.5 rounded-full shrink-0"
               >
+                <span
+                  class="w-1.5 h-1.5 rounded-full bg-indigo-500 animate-pulse"
+                ></span>
+                60 FPS Engine
+              </span>
             </div>
             <p
-              class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block"
+              class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block truncate"
             >
-              Gõ chuẩn phản xạ & Ghi nhớ từ vựng qua ngữ cảnh
+              Gõ chuẩn phản xạ &amp; Ghi nhớ từ vựng qua ngữ cảnh
             </p>
           </div>
         </div>
 
-        <!-- Stats Dashboard Bar -->
-        <div class="flex items-center gap-2 sm:gap-4 text-xs font-semibold">
+        <!-- Telemetry / Stats Dashboard Bar -->
+        <div class="flex items-center gap-2 sm:gap-3 text-xs">
+          <!-- WPM -->
           <div
-            class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-700/60 px-3 py-1.5 rounded-xl border border-slate-200/60 dark:border-slate-700/50"
+            class="flex items-center gap-2 bg-slate-100/80 dark:bg-slate-800/70 px-2.5 sm:px-3.5 py-1.5 rounded-xl border border-slate-200/70 dark:border-slate-700/60 transition-colors"
+            title="Tốc độ gõ (Words Per Minute)"
           >
-            <i class="fa-solid fa-gauge-high text-blue-500"></i>
-            <span class="text-slate-500 dark:text-slate-400 hidden md:inline"
-              >Tốc độ:</span
+            <div
+              class="w-6 h-6 rounded-lg bg-blue-500/10 dark:bg-blue-400/10 flex items-center justify-center text-blue-600 dark:text-blue-400 shrink-0"
             >
-            <span
-              id="stat-wpm"
-              class="font-bold text-slate-900 dark:text-white font-mono text-sm"
-              >0</span
-            >
-            <span class="text-[10px] text-slate-400">WPM</span>
+              <i class="fa-solid fa-gauge-high text-[11px]"></i>
+            </div>
+            <div class="flex items-baseline gap-1">
+              <span
+                class="text-slate-500 dark:text-slate-400 hidden lg:inline font-medium"
+                >Tốc độ:</span
+              >
+              <span
+                id="stat-wpm"
+                class="font-bold text-slate-900 dark:text-white font-mono text-sm tabular-nums"
+                >0</span
+              >
+              <span class="text-[10px] font-semibold text-slate-400 uppercase"
+                >WPM</span
+              >
+            </div>
           </div>
+
+          <!-- Accuracy -->
           <div
-            class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-700/60 px-3 py-1.5 rounded-xl border border-slate-200/60 dark:border-slate-700/50"
+            class="flex items-center gap-2 bg-slate-100/80 dark:bg-slate-800/70 px-2.5 sm:px-3.5 py-1.5 rounded-xl border border-slate-200/70 dark:border-slate-700/60 transition-colors"
+            title="Độ chính xác khi gõ"
           >
-            <i class="fa-solid fa-bullseye text-emerald-500"></i>
-            <span class="text-slate-500 dark:text-slate-400 hidden md:inline"
-              >Chính xác:</span
+            <div
+              class="w-6 h-6 rounded-lg bg-emerald-500/10 dark:bg-emerald-400/10 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0"
             >
-            <span
-              id="stat-accuracy"
-              class="font-bold text-slate-900 dark:text-white font-mono text-sm"
-              >100%</span
-            >
+              <i class="fa-solid fa-bullseye text-[11px]"></i>
+            </div>
+            <div class="flex items-baseline gap-1">
+              <span
+                class="text-slate-500 dark:text-slate-400 hidden lg:inline font-medium"
+                >Chính xác:</span
+              >
+              <span
+                id="stat-accuracy"
+                class="font-bold text-slate-900 dark:text-white font-mono text-sm tabular-nums"
+                >100%</span
+              >
+            </div>
           </div>
+
+          <!-- Hints -->
           <div
-            class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-700/60 px-3 py-1.5 rounded-xl border border-slate-200/60 dark:border-slate-700/50"
+            class="flex items-center gap-2 bg-slate-100/80 dark:bg-slate-800/70 px-2.5 sm:px-3.5 py-1.5 rounded-xl border border-slate-200/70 dark:border-slate-700/60 transition-colors"
+            title="Số lần sử dụng gợi ý"
           >
-            <i class="fa-solid fa-lightbulb text-amber-500"></i>
-            <span class="text-slate-500 dark:text-slate-400 hidden md:inline"
-              >Gợi ý:</span
+            <div
+              class="w-6 h-6 rounded-lg bg-amber-500/10 dark:bg-amber-400/10 flex items-center justify-center text-amber-600 dark:text-amber-400 shrink-0"
             >
-            <span
-              id="stat-hints"
-              class="font-bold text-slate-900 dark:text-white font-mono text-sm"
-              >0</span
-            >
+              <i class="fa-solid fa-lightbulb text-[11px]"></i>
+            </div>
+            <div class="flex items-baseline gap-1">
+              <span
+                class="text-slate-500 dark:text-slate-400 hidden lg:inline font-medium"
+                >Gợi ý:</span
+              >
+              <span
+                id="stat-hints"
+                class="font-bold text-slate-900 dark:text-white font-mono text-sm tabular-nums"
+                >0</span
+              >
+            </div>
           </div>
         </div>
 
         <!-- Header Action Controls -->
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 shrink-0">
           <button
             id="btn-open-essay-modal"
             title="Quản lý & Dán bài mẫu mới"
-            class="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-sm shadow-indigo-500/20 active:scale-95"
+            class="flex items-center gap-2 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white rounded-xl text-xs font-semibold transition-all shadow-sm shadow-indigo-500/20 hover:shadow-md hover:shadow-indigo-500/25 active:scale-[0.98]"
           >
-            <i class="fa-solid fa-folder-plus"></i>
+            <i class="fa-solid fa-folder-plus text-xs"></i>
             <span class="hidden md:inline">Kho Bài Essay</span>
           </button>
           <button
             id="btn-theme-toggle"
             title="Chuyển chế độ Sáng/Tối"
-            class="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition active:scale-95"
+            class="w-9 h-9 flex items-center justify-center text-slate-600 dark:text-slate-300 bg-slate-100/80 dark:bg-slate-800/80 hover:bg-slate-200/70 dark:hover:bg-slate-700/80 border border-slate-200/70 dark:border-slate-700/60 rounded-xl transition-all active:scale-95"
           >
-            <i class="fa-solid fa-moon dark:hidden text-base"></i>
-            <span class="hidden dark:inline text-base"
-              ><i class="fa-solid fa-sun text-amber-400"></i
-            ></span>
+            <i class="fa-solid fa-moon dark:hidden text-sm"></i>
+            <span class="hidden dark:inline text-sm">
+              <i class="fa-solid fa-sun text-amber-400"></i>
+            </span>
           </button>
         </div>
       </div>
 
-      <!-- Progress Indicator Bar -->
-      <div class="w-full bg-slate-100 dark:bg-slate-700/40 h-1">
+      <!-- Smooth Top Progress Bar -->
+      <div
+        class="w-full bg-slate-200/60 dark:bg-slate-800/80 h-1 overflow-hidden"
+      >
         <div
           id="essay-progress-bar"
-          class="bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400 h-1 w-0 transition-all duration-200"
+          class="bg-gradient-to-r from-indigo-500 via-blue-500 to-emerald-400 h-full w-0 transition-all duration-300 ease-out shadow-[0_0_10px_rgba(99,102,241,0.5)]"
         ></div>
       </div>
     </header>
 
-    <!-- Main Workspace -->
+    <!-- Main SaaS Workspace -->
     <main
-      class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 flex flex-col gap-4 sm:gap-5"
+      class="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-6 flex flex-col gap-4 sm:gap-5"
     >
-      <!-- Interactive Controls Toolbar -->
-      <div
-        class="bg-white dark:bg-slate-800 p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-700/70 shadow-sm flex flex-wrap items-center justify-between gap-3 text-xs"
+      <!-- Interactive Control Ribbon -->
+      <section
+        aria-label="Thanh công cụ chế độ luyện gõ"
+        class="bg-white/90 dark:bg-slate-900/90 backdrop-blur-md p-3 sm:px-4 sm:py-3 rounded-2xl border border-slate-200/80 dark:border-slate-800 shadow-soft flex flex-wrap items-center justify-between gap-3 text-xs"
       >
-        <!-- Visibility & Error Modes Segmented Controls -->
-        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+        <!-- Left: Segmented Mode Selectors -->
+        <div class="flex flex-wrap items-center gap-2 sm:gap-2.5">
           <!-- Visibility Level Segment -->
           <div
-            class="flex items-center bg-slate-100 dark:bg-slate-700/70 p-1 rounded-xl font-semibold"
+            class="flex items-center bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/50 font-semibold"
           >
             <button
               id="mode-ghost"
-              class="mode-btn px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 transition"
+              class="mode-btn px-2.5 sm:px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all flex items-center gap-1.5"
               title="Hiện chữ mờ để gõ theo"
             >
-              <i class="fa-solid fa-ghost mr-1 text-indigo-400"></i> Ghost (Mờ)
+              <i
+                class="fa-solid fa-ghost text-indigo-500 dark:text-indigo-400"
+              ></i>
+              <span>Ghost (Mờ)</span>
             </button>
             <button
               id="mode-first"
-              class="mode-btn px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 transition"
+              class="mode-btn px-2.5 sm:px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all flex items-center gap-1.5"
               title="Chỉ hiện chữ cái đầu từ"
             >
-              <i class="fa-solid fa-font mr-1 text-blue-400"></i> s _ _ _ (Đầu
-              từ)
+              <i class="fa-solid fa-font text-blue-500 dark:text-blue-400"></i>
+              <span>s _ _ _ (Đầu từ)</span>
             </button>
             <button
               id="mode-mask"
-              class="mode-btn active px-3 py-1.5 rounded-lg bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-sm transition"
+              class="mode-btn active px-2.5 sm:px-3 py-1.5 rounded-lg bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-sm transition-all flex items-center gap-1.5"
               title="Ẩn chữ hoàn toàn"
             >
-              <i class="fa-solid fa-eye-slash mr-1 text-amber-500"></i> _ _ _
-              (Ẩn hết)
+              <i class="fa-solid fa-eye-slash text-amber-500"></i>
+              <span>_ _ _ (Ẩn hết)</span>
             </button>
           </div>
 
           <!-- Error Mode Toggle -->
           <div
-            class="flex items-center bg-slate-100 dark:bg-slate-700/70 p-1 rounded-xl font-semibold"
+            class="flex items-center bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/50 font-semibold"
           >
             <button
               id="err-mode-stop"
-              class="err-mode-btn active px-3 py-1.5 rounded-lg bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-sm transition"
+              class="err-mode-btn active px-2.5 sm:px-3 py-1.5 rounded-lg bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-sm transition-all flex items-center gap-1.5"
               title="Chặn gõ tiếp khi sai, sai 2 lần tự hiện gợi ý"
             >
-              <i class="fa-solid fa-shield-halved mr-1 text-emerald-500"></i>
-              Học Nhanh (Khóa sai)
+              <i class="fa-solid fa-shield-halved text-emerald-500"></i>
+              <span>Học Nhanh (Khóa sai)</span>
             </button>
             <button
               id="err-mode-free"
-              class="err-mode-btn px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 transition"
+              class="err-mode-btn px-2.5 sm:px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all flex items-center gap-1.5"
               title="Cho phép gõ tự do và xóa bằng Backspace"
             >
-              <i class="fa-solid fa-delete-left mr-1 text-rose-500"></i> Gõ Tự
-              Do
+              <i class="fa-solid fa-delete-left text-rose-500"></i>
+              <span>Gõ Tự Do</span>
             </button>
           </div>
 
           <!-- View Layout Toggle -->
           <div
-            class="flex items-center bg-slate-100 dark:bg-slate-700/70 p-1 rounded-xl font-semibold hidden md:flex"
+            class="hidden md:flex items-center bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/50 font-semibold"
           >
             <button
               id="view-sentence"
-              class="view-btn active px-3 py-1.5 rounded-lg bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-sm transition"
+              class="view-btn active px-2.5 sm:px-3 py-1.5 rounded-lg bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-sm transition-all flex items-center gap-1.5"
             >
-              <i class="fa-solid fa-align-left mr-1"></i> Từng câu
+              <i class="fa-solid fa-align-left text-slate-400"></i>
+              <span>Từng câu</span>
             </button>
             <button
               id="view-full"
-              class="view-btn px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 transition"
+              class="view-btn px-2.5 sm:px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white transition-all flex items-center gap-1.5"
             >
-              <i class="fa-solid fa-paragraph mr-1"></i> Cả bài
+              <i class="fa-solid fa-paragraph text-slate-400"></i>
+              <span>Cả bài</span>
             </button>
           </div>
         </div>
 
-        <!-- Quick Action Helpers & Shortcuts -->
+        <!-- Right: Quick Action Helpers & Shortcuts -->
         <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
           <button
             id="btn-speak-rate"
-            class="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold transition text-slate-600 dark:text-slate-300"
-            title="Đổi tốc độ phát âm"
+            class="px-2.5 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 font-mono font-bold transition-all text-slate-700 dark:text-slate-300 active:scale-95"
+            title="Đổi tốc độ phát âm giọng đọc"
           >
+            <i
+              class="fa-solid fa-waveform-lines text-[10px] text-indigo-500 mr-1"
+            ></i>
             <span id="rate-label">0.9x</span>
           </button>
+
           <button
             id="btn-speak-sentence"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition font-medium text-slate-700 dark:text-slate-300"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200/80 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all font-semibold text-slate-700 dark:text-slate-200 active:scale-95"
+            title="Phát âm câu tiếng Anh hiện tại (Ctrl+S)"
           >
-            <i class="fa-solid fa-volume-high text-indigo-500"></i> Nghe câu
-            <kbd class="hidden sm:inline opacity-60">Ctrl+S</kbd>
+            <i class="fa-solid fa-volume-high text-indigo-500"></i>
+            <span>Nghe câu</span>
+            <kbd
+              class="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-slate-200/70 dark:bg-slate-700 text-slate-600 dark:text-slate-300"
+              >Ctrl+S</kbd
+            >
           </button>
+
           <button
             id="btn-word-hint"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30 transition font-medium"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-300 border border-amber-500/25 transition-all font-semibold active:scale-95"
+            title="Hiện gợi ý từ đang gõ (Phím Tab)"
           >
-            <i class="fa-solid fa-key"></i> Gợi ý
-            <kbd class="hidden sm:inline opacity-60">Tab</kbd>
+            <i class="fa-solid fa-key text-amber-500"></i>
+            <span>Gợi ý</span>
+            <kbd
+              class="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-800 dark:text-amber-200"
+              >Tab</kbd
+            >
           </button>
+
           <button
             id="btn-fill-word"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-700 dark:text-blue-400 border border-blue-500/30 transition font-medium"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-300 border border-indigo-500/25 transition-all font-semibold active:scale-95"
+            title="Tự động điền từ hiện tại (Shift+Space)"
           >
-            <i class="fa-solid fa-wand-magic-sparkles"></i> Điền từ
-            <kbd class="hidden sm:inline opacity-60">Shift+Space</kbd>
+            <i class="fa-solid fa-wand-magic-sparkles text-indigo-500"></i>
+            <span>Điền từ</span>
+            <kbd
+              class="hidden sm:inline-block text-[10px] font-mono px-1.5 py-0.5 rounded bg-indigo-500/15 text-indigo-800 dark:text-indigo-200"
+              >Shift+Space</kbd
+            >
           </button>
         </div>
-      </div>
+      </section>
 
-      <!-- Primary High-Performance Typing Arena -->
-      <div
+      <!-- Primary High-Performance 60FPS Typing Arena -->
+      <section
         id="typing-wrapper"
-        class="relative bg-white dark:bg-slate-800/90 rounded-3xl border border-slate-200 dark:border-slate-700/80 p-6 sm:p-10 shadow-sm min-h-[280px] flex flex-col justify-between overflow-hidden cursor-text"
+        aria-label="Khu vực luyện gõ văn bản"
+        class="relative bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-10 shadow-soft min-h-[290px] flex flex-col justify-between overflow-hidden cursor-text transition-colors group"
       >
+        <!-- Subtle top studio highlight border -->
+        <div
+          class="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-indigo-500/40 to-transparent"
+        ></div>
+
         <!-- Sentence Stepper Header -->
-        <div class="flex items-center justify-between gap-4 mb-6">
+        <div
+          class="flex flex-wrap items-center justify-between gap-3 mb-6 z-10"
+        >
           <div
             id="sentence-step-badge"
-            class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-slate-100 dark:bg-slate-700/60 rounded-full text-xs text-slate-600 dark:text-slate-300 font-semibold border border-slate-200/50 dark:border-slate-700/40"
+            class="inline-flex items-center gap-1.5 px-3 py-1.5 bg-slate-100/90 dark:bg-slate-800/90 rounded-full text-xs text-slate-700 dark:text-slate-200 font-semibold border border-slate-200/80 dark:border-slate-700/70 shadow-2xs"
           >
             <button
               id="btn-prev-sent"
               title="Câu trước (Phím Mũi tên Trái)"
-              class="hover:text-indigo-600 p-0.5"
+              class="w-6 h-6 rounded-full flex items-center justify-center hover:bg-white dark:hover:bg-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400 transition"
             >
-              <i class="fa-solid fa-chevron-left"></i>
+              <i class="fa-solid fa-chevron-left text-[10px]"></i>
             </button>
-            <span
-              >Câu <span id="current-sentence-num">1</span> /
-              <span id="total-sentences-num">8</span></span
-            >
+            <span class="px-1 font-mono text-xs">
+              Câu
+              <span
+                id="current-sentence-num"
+                class="font-bold text-slate-900 dark:text-white"
+                >1</span
+              >
+              <span class="text-slate-400">/</span>
+              <span id="total-sentences-num">8</span>
+            </span>
             <button
               id="btn-next-sent"
               title="Câu sau (Phím Mũi tên Phải)"
-              class="hover:text-indigo-600 p-0.5"
+              class="w-6 h-6 rounded-full flex items-center justify-center hover:bg-white dark:hover:bg-slate-700 hover:text-indigo-600 dark:hover:text-indigo-400 transition"
             >
-              <i class="fa-solid fa-chevron-right"></i>
+              <i class="fa-solid fa-chevron-right text-[10px]"></i>
             </button>
             <span
-              class="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600"
+              class="w-1 h-1 rounded-full bg-slate-300 dark:bg-slate-600 mx-0.5"
             ></span>
             <span
               id="sentence-progress-percent"
-              class="text-indigo-600 dark:text-indigo-400 font-bold"
+              class="text-indigo-600 dark:text-indigo-400 font-mono font-bold pr-1"
               >0%</span
             >
           </div>
 
-          <div class="flex items-center gap-2 text-xs text-slate-400">
-            <span class="hidden sm:inline"
-              ><i class="fa-solid fa-bolt text-amber-400 mr-1"></i>Chỉ cần gõ
-              trực tiếp (Không cần click)</span
+          <div
+            class="flex items-center gap-2.5 text-xs text-slate-400 dark:text-slate-500"
+          >
+            <span
+              class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800 text-slate-500 dark:text-slate-400"
             >
+              <i class="fa-solid fa-bolt text-amber-400"></i>
+              <span>Gõ trực tiếp trên bàn phím (Không cần click)</span>
+            </span>
             <button
               id="btn-reset-sentence"
-              title="Tập lại câu này (Esc)"
-              class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500"
+              title="Tập lại câu này (Phím Esc)"
+              class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-600 dark:text-slate-300 font-medium transition active:scale-95"
             >
-              <i class="fa-solid fa-rotate-left"></i>
+              <i class="fa-solid fa-rotate-left text-xs"></i>
+              <span class="hidden md:inline">Làm lại câu</span>
             </button>
           </div>
         </div>
@@ -468,12 +640,13 @@
         <!-- Dynamic Floating Meaning Pill -->
         <div
           id="floating-word-pill"
-          class="opacity-0 bg-slate-900/90 dark:bg-indigo-950/95 text-white dark:text-indigo-100 text-xs py-1 px-3 rounded-full shadow-lg border border-indigo-500/30 font-medium flex items-center gap-1.5 backdrop-blur-sm"
+          class="opacity-0 bg-slate-900/95 dark:bg-indigo-950/95 text-white dark:text-indigo-50 text-xs py-1.5 px-3.5 rounded-full shadow-lg border border-indigo-500/40 font-medium flex items-center gap-2 backdrop-blur-md"
         >
+          <i class="fa-solid fa-sparkles text-[10px] text-indigo-400"></i>
           <span id="pill-vn-text">Nghĩa tiếng Việt</span>
           <span
             id="pill-en-hint"
-            class="hidden font-bold text-amber-300 font-mono border-l border-slate-700 pl-1.5"
+            class="hidden font-bold text-amber-300 font-mono border-l border-slate-700 pl-2"
             >target</span
           >
         </div>
@@ -484,7 +657,7 @@
         <!-- Text Display Area (Pre-rendered Spans for zero layout reflows) -->
         <div
           id="essay-display"
-          class="relative z-10 font-mono text-xl sm:text-2xl sm:leading-relaxed tracking-wide select-none outline-none break-words my-auto py-4"
+          class="relative z-10 font-mono text-xl sm:text-2xl sm:leading-[2.1rem] tracking-wide select-none outline-none break-words my-auto py-5"
         >
           <!-- Dynamically populated DOM spans -->
         </div>
@@ -492,7 +665,7 @@
         <!-- Keyboard focus prompt fallback notice -->
         <div
           id="focus-notice"
-          class="hidden absolute inset-0 bg-slate-900/10 dark:bg-slate-900/40 backdrop-blur-[2px] z-30 rounded-3xl flex items-center justify-center"
+          class="hidden absolute inset-0 bg-slate-900/15 dark:bg-slate-950/50 backdrop-blur-[2px] z-30 rounded-3xl flex items-center justify-center"
         >
           <span
             class="bg-indigo-600 text-white px-5 py-2.5 rounded-2xl text-sm font-semibold shadow-xl flex items-center gap-2 animate-bounce"
@@ -500,231 +673,290 @@
             <i class="fa-solid fa-hand-pointer"></i> Nhấp để tiếp tục gõ
           </span>
         </div>
-      </div>
+      </section>
 
-      <!-- Anchored Sentence Translation & Word Lookup Panel -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
-        <!-- High Contrast Sentence Translation Bar -->
+      <!-- Bento Grid: Sentence Translation & Active Word Inspector -->
+      <section class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
+        <!-- High-Contrast Sentence Translation Card -->
         <div
-          class="lg:col-span-2 bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 text-white rounded-2xl p-5 shadow-sm border border-indigo-800/40 flex flex-col justify-between gap-3"
+          class="lg:col-span-2 relative overflow-hidden bg-gradient-to-br from-slate-900 via-indigo-950 to-slate-900 text-white rounded-2xl p-5 sm:p-6 shadow-soft border border-indigo-500/25 flex flex-col justify-between gap-4"
         >
-          <div>
-            <div class="flex items-center justify-between gap-2 mb-2">
+          <!-- Subtle decorative glow -->
+          <div
+            class="pointer-events-none absolute -right-12 -top-12 w-48 h-48 rounded-full bg-indigo-500/15 blur-2xl"
+          ></div>
+
+          <div class="relative z-10">
+            <div class="flex items-center justify-between gap-2 mb-3">
               <div
-                class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-300"
+                class="inline-flex items-center gap-2 text-[11px] font-bold uppercase tracking-wider text-indigo-300 bg-indigo-500/15 border border-indigo-400/20 px-2.5 py-1 rounded-lg"
               >
-                <i class="fa-solid fa-language text-indigo-400 text-sm"></i>
-                Bản dịch Tiếng Việt (Câu hiện tại)
+                <i class="fa-solid fa-language text-indigo-400 text-xs"></i>
+                <span>Bản dịch Tiếng Việt (Câu hiện tại)</span>
               </div>
               <button
                 id="btn-speak-vn"
-                class="text-xs text-indigo-300 hover:text-white transition flex items-center gap-1 bg-indigo-900/50 px-2.5 py-1 rounded-lg border border-indigo-700/50"
+                class="text-xs font-semibold text-indigo-200 hover:text-white bg-white/5 hover:bg-white/15 px-3 py-1.5 rounded-xl border border-white/10 transition flex items-center gap-1.5 active:scale-95"
               >
-                <i class="fa-solid fa-volume-low"></i> Phổ âm TV
+                <i class="fa-solid fa-volume-low text-indigo-300"></i>
+                <span>Phát âm TV</span>
               </button>
             </div>
+
             <p
               id="current-sentence-vn"
-              class="text-base sm:text-lg font-semibold text-indigo-50 leading-relaxed min-h-[3.2rem]"
+              class="text-base sm:text-lg font-semibold text-indigo-50/95 leading-relaxed min-h-[3.2rem]"
             >
               <!-- Translated sentence appears here -->
             </p>
           </div>
 
           <div
-            class="text-[11px] text-indigo-300/70 pt-2 border-t border-indigo-900/60 flex items-center justify-between"
+            class="relative z-10 text-[11px] text-indigo-200/70 pt-3 border-t border-white/10 flex flex-wrap items-center justify-between gap-2"
           >
+            <span class="flex items-center gap-1.5">
+              <i class="fa-solid fa-circle-info text-indigo-400"></i>
+              <span
+                >Mẹo: Nhấp vào thẻ từ bất kỳ bên dưới để nghe phát âm &amp; mở
+                khóa từ.</span
+              >
+            </span>
             <span
-              ><i class="fa-solid fa-circle-info mr-1"></i>Gợi ý: Nhấp vào bất
-              kỳ từ nào bên dưới để nghe phát âm & xem chi tiết.</span
+              class="font-mono text-indigo-300/90 bg-black/20 px-2 py-0.5 rounded"
             >
-            <span class="font-mono"
-              >Shortcuts: Tab (Gợi ý) | Shift+Space (Điền từ)</span
-            >
+              Tab: Gợi ý &bull; Shift+Space: Điền từ &bull; Esc: Làm lại
+            </span>
           </div>
         </div>
 
-        <!-- Current Focused Word Card -->
+        <!-- Active Word Inspector Card -->
         <div
-          class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700/80 shadow-sm flex flex-col justify-between"
+          class="bg-white dark:bg-slate-900 rounded-2xl p-5 sm:p-6 border border-slate-200/90 dark:border-slate-800 shadow-soft flex flex-col justify-between"
         >
           <div>
-            <div class="flex items-center justify-between mb-2">
+            <div class="flex items-center justify-between mb-3">
               <span
-                class="text-[11px] font-bold text-slate-400 uppercase tracking-wider"
-                >Từ hiện tại</span
+                class="inline-flex items-center gap-1.5 text-[11px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider"
               >
+                <i class="fa-solid fa-crosshairs text-indigo-500"></i>
+                Từ hiện tại
+              </span>
               <span
                 id="word-length-badge"
-                class="text-xs font-mono font-medium bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 px-2.5 py-0.5 rounded-full border border-indigo-200/50 dark:border-indigo-800/40"
+                class="text-xs font-mono font-semibold bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 px-2.5 py-0.5 rounded-full border border-indigo-200/60 dark:border-indigo-500/30"
                 >0 ký tự</span
               >
             </div>
 
-            <div class="flex items-baseline justify-between gap-2 mb-1">
+            <div
+              class="flex items-center justify-between gap-2 p-3.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/60 dark:border-slate-700/50 mb-3"
+            >
               <h3
                 id="target-word-en"
-                class="text-2xl font-bold font-mono text-indigo-600 dark:text-indigo-400 tracking-tight"
+                class="text-2xl font-bold font-mono text-indigo-600 dark:text-indigo-400 tracking-tight truncate"
               >
                 •••••
               </h3>
               <button
                 id="btn-speak-word"
                 title="Phát âm từ này"
-                class="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition p-1 text-lg"
+                class="w-9 h-9 rounded-xl bg-white dark:bg-slate-800 hover:bg-indigo-50 dark:hover:bg-indigo-500/20 text-slate-500 hover:text-indigo-600 dark:hover:text-indigo-400 border border-slate-200/80 dark:border-slate-700 transition flex items-center justify-center shrink-0 active:scale-95"
               >
-                <i class="fa-solid fa-volume-high"></i>
+                <i class="fa-solid fa-volume-high text-sm"></i>
               </button>
             </div>
 
-            <div
-              id="target-word-vn"
-              class="text-slate-700 dark:text-slate-200 text-sm font-semibold mt-1"
-            >
-              (Đang tải...)
+            <div class="px-1">
+              <div
+                class="text-[11px] font-medium text-slate-400 dark:text-slate-500 mb-0.5"
+              >
+                Nghĩa ngữ cảnh:
+              </div>
+              <div
+                id="target-word-vn"
+                class="text-slate-800 dark:text-slate-100 text-sm sm:text-base font-bold"
+              >
+                (Đang tải...)
+              </div>
             </div>
           </div>
 
           <div
-            class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-xs"
+            class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs"
           >
             <button
               id="btn-toggle-word-peek"
-              class="text-indigo-600 dark:text-indigo-400 hover:underline font-bold flex items-center gap-1"
+              class="w-full py-2 px-3 rounded-xl bg-indigo-50/80 dark:bg-indigo-500/10 hover:bg-indigo-100/80 dark:hover:bg-indigo-500/20 text-indigo-600 dark:text-indigo-300 font-bold transition flex items-center justify-center gap-1.5 active:scale-[0.99]"
             >
-              <i class="fa-solid fa-eye"></i> Xem đáp án từ này
+              <i class="fa-solid fa-eye"></i>
+              <span>Xem đáp án từ này</span>
             </button>
           </div>
         </div>
-      </div>
+      </section>
 
       <!-- Sentence Word-by-Word Breakdown Chips Strip -->
-      <div
-        class="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-700/80 shadow-sm"
+      <section
+        class="bg-white dark:bg-slate-900 rounded-2xl p-4 sm:p-5 border border-slate-200/90 dark:border-slate-800 shadow-soft"
       >
-        <h3
-          class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center justify-between"
-        >
-          <span
-            ><i class="fa-solid fa-layer-group text-indigo-500 mr-1.5"></i> Chi
-            tiết từ vựng trong câu</span
+        <div class="flex flex-wrap items-center justify-between gap-2 mb-3.5">
+          <h3
+            class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider flex items-center gap-2"
           >
-          <span class="text-slate-500 text-[11px] font-normal"
-            >Nhấp vào thẻ từ để nghe phát âm & hiện nghĩa</span
-          >
-        </h3>
+            <span
+              class="w-6 h-6 rounded-lg bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 flex items-center justify-center"
+            >
+              <i class="fa-solid fa-layer-group text-xs"></i>
+            </span>
+            <span>Chi tiết từ vựng trong câu</span>
+          </h3>
+          <span class="text-slate-400 dark:text-slate-500 text-xs">
+            Nhấp vào thẻ từ bất kỳ để nghe phát âm &amp; hiện chữ
+          </span>
+        </div>
 
         <div
           id="words-breakdown-container"
-          class="flex flex-wrap gap-2 max-h-44 overflow-y-auto pr-1"
+          class="flex flex-wrap gap-2 max-h-48 overflow-y-auto pr-1"
         >
           <!-- Dynamic Word Chips -->
         </div>
-      </div>
+      </section>
     </main>
 
     <!-- Modal: Essay Library & Custom Manager -->
     <div
       id="modal-custom"
-      class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden"
+      class="fixed inset-0 bg-slate-950/65 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden"
     >
       <div
-        class="bg-white dark:bg-slate-800 rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col gap-5 max-h-[90vh] overflow-y-auto"
+        class="bg-white dark:bg-slate-900 rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200/90 dark:border-slate-800 flex flex-col gap-5 max-h-[90vh] overflow-y-auto"
       >
+        <!-- Modal Header -->
         <div
-          class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-4"
+          class="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-4"
         >
-          <div>
-            <h2
-              class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2"
+          <div class="flex items-center gap-3">
+            <div
+              class="w-10 h-10 rounded-2xl bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-400 flex items-center justify-center text-lg shrink-0"
             >
-              <i class="fa-solid fa-folder-open text-indigo-600"></i> Quản Lý &
-              Thêm Bài Essay Mới
-            </h2>
-            <p class="text-xs text-slate-500 dark:text-slate-400">
-              Chọn bài mẫu có sẵn hoặc dán văn bản tiếng Anh mới để thực hành.
-            </p>
+              <i class="fa-solid fa-folder-open"></i>
+            </div>
+            <div>
+              <h2
+                class="text-lg sm:text-xl font-bold text-slate-900 dark:text-white"
+              >
+                Quản Lý &amp; Thêm Bài Essay Mới
+              </h2>
+              <p class="text-xs text-slate-500 dark:text-slate-400">
+                Chọn bài mẫu có sẵn trong kho hoặc dán văn bản tiếng Anh mới để
+                thực hành.
+              </p>
+            </div>
           </div>
           <button
             id="btn-close-modal"
-            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-2xl font-bold p-1"
+            class="w-8 h-8 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-500 dark:text-slate-400 flex items-center justify-center text-lg font-bold transition"
           >
             &times;
           </button>
         </div>
 
         <!-- Saved Essays Quick Picker -->
-        <div>
-          <label class="block text-xs font-bold uppercase text-slate-500 mb-2"
-            >Danh sách bài học đã lưu</label
+        <div
+          class="bg-slate-50/80 dark:bg-slate-800/40 p-4 rounded-2xl border border-slate-200/70 dark:border-slate-800"
+        >
+          <label
+            class="block text-[11px] font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500 mb-2.5"
           >
-          <div id="essay-saved-list" class="flex flex-wrap gap-2 mb-4">
+            <i class="fa-solid fa-bookmark text-indigo-500 mr-1"></i>
+            Danh sách bài học đã lưu
+          </label>
+          <div id="essay-saved-list" class="flex flex-wrap gap-2">
             <!-- Populated dynamically -->
           </div>
         </div>
 
+        <!-- Form Fields -->
         <div class="space-y-4">
           <div>
-            <label class="block text-xs font-bold uppercase text-slate-500 mb-1"
-              >Tiêu đề bài essay</label
+            <label
+              for="input-essay-title"
+              class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5"
             >
+              Tiêu đề bài Essay
+            </label>
             <input
               id="input-essay-title"
               type="text"
-              class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-medium text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+              class="w-full px-4 py-2.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 font-medium text-sm focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 outline-none transition"
               placeholder="VD: Spending Habits Essay"
             />
           </div>
 
           <div>
-            <label class="block text-xs font-bold uppercase text-slate-500 mb-1"
-              >Đoạn văn tiếng Anh (English Essay Text)</label
+            <label
+              for="input-custom-en"
+              class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1.5"
             >
+              Đoạn văn tiếng Anh (English Essay Text)
+            </label>
             <textarea
               id="input-custom-en"
               rows="5"
-              class="w-full p-3.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+              class="w-full p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 font-mono text-sm leading-relaxed focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 outline-none transition"
               placeholder="Dán đoạn văn tiếng Anh vào đây..."
             ></textarea>
           </div>
 
           <div>
-            <div class="flex items-center justify-between mb-1">
-              <label class="block text-xs font-bold uppercase text-slate-500"
-                >Bản dịch tiếng Việt (Theo từng câu)</label
+            <div
+              class="flex flex-wrap items-center justify-between gap-2 mb-1.5"
+            >
+              <label
+                for="input-custom-vn"
+                class="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400"
               >
+                Bản dịch tiếng Việt (Theo từng câu)
+              </label>
               <button
                 id="btn-auto-translate"
-                class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-bold flex items-center gap-1"
+                type="button"
+                class="text-xs px-3 py-1 rounded-lg bg-indigo-50 dark:bg-indigo-500/15 text-indigo-600 dark:text-indigo-300 hover:bg-indigo-100 dark:hover:bg-indigo-500/25 font-bold transition flex items-center gap-1.5"
               >
-                <i class="fa-solid fa-wand-magic-sparkles"></i> Tự động tách câu
-                & Dịch Tiếng Việt
+                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                <span>Tự động tách câu &amp; Dịch Tiếng Việt</span>
               </button>
             </div>
             <textarea
               id="input-custom-vn"
               rows="4"
-              class="w-full p-3.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+              class="w-full p-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/80 text-slate-900 dark:text-slate-100 text-sm leading-relaxed focus:bg-white dark:focus:bg-slate-800 focus:ring-2 focus:ring-indigo-500/40 focus:border-indigo-500 outline-none transition"
               placeholder="Mỗi dòng là bản dịch tương ứng của 1 câu (Hoặc nhấn Tự động dịch ở trên)..."
             ></textarea>
           </div>
         </div>
 
+        <!-- Modal Footer -->
         <div
-          class="flex items-center justify-between border-t border-slate-100 dark:border-slate-700 pt-4"
+          class="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 dark:border-slate-800 pt-4"
         >
           <button
             id="btn-load-default"
-            class="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition"
+            type="button"
+            class="px-4 py-2.5 text-xs font-bold text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition flex items-center gap-1.5"
           >
-            Tải Bài Mẫu Mặc Định
+            <i class="fa-solid fa-rotate"></i>
+            <span>Tải Bài Mẫu Mặc Định</span>
           </button>
           <div class="flex items-center gap-2">
             <button
               id="btn-save-custom"
-              class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md transition flex items-center gap-2"
+              type="button"
+              class="px-5 py-2.5 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 rounded-xl shadow-md shadow-indigo-500/20 transition flex items-center gap-2 active:scale-95"
             >
-              <i class="fa-solid fa-check"></i> Lưu & Ôn Tập Bài Này
+              <i class="fa-solid fa-check"></i>
+              <span>Lưu &amp; Ôn Tập Bài Này</span>
             </button>
           </div>
         </div>
@@ -734,78 +966,90 @@
     <!-- Modal: Celebration & Weak Words Review -->
     <div
       id="modal-completion"
-      class="fixed inset-0 bg-slate-900/75 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden"
+      class="fixed inset-0 bg-slate-950/75 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden"
     >
       <div
-        class="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-700 text-center flex flex-col items-center"
+        class="bg-white dark:bg-slate-900 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200/90 dark:border-slate-800 text-center flex flex-col items-center"
       >
         <div
-          class="w-20 h-20 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-4xl mb-3 shadow-inner"
+          class="w-20 h-20 rounded-3xl bg-gradient-to-br from-emerald-400/20 to-teal-500/20 border border-emerald-500/30 text-emerald-500 dark:text-emerald-400 flex items-center justify-center text-4xl mb-4 shadow-inner"
         >
           <i class="fa-solid fa-trophy"></i>
         </div>
 
-        <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-1">
+        <h2 class="text-2xl font-extrabold text-slate-900 dark:text-white mb-1">
           Hoàn Thành Bài Viết!
         </h2>
         <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">
-          Bạn đã gõ hoàn tất toàn bộ câu trong bài mẫu essay.
+          Bạn đã gõ hoàn tất toàn bộ các câu trong bài mẫu essay này.
         </p>
 
-        <!-- Final Metrics -->
+        <!-- Final Metrics Bento -->
         <div class="grid grid-cols-3 gap-3 w-full mb-6">
           <div
-            class="bg-slate-50 dark:bg-slate-700/50 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700"
+            class="bg-slate-50 dark:bg-slate-800/70 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700/70"
           >
-            <div class="text-[11px] text-slate-400">Tốc độ gõ</div>
+            <div class="text-[11px] font-medium text-slate-400 mb-0.5">
+              Tốc độ gõ
+            </div>
             <div
               id="final-wpm"
-              class="text-2xl font-bold text-slate-900 dark:text-white font-mono"
+              class="text-2xl font-extrabold text-slate-900 dark:text-white font-mono"
             >
               0
             </div>
-            <div class="text-[10px] text-slate-400">WPM</div>
+            <div class="text-[10px] font-semibold text-slate-400 uppercase">
+              WPM
+            </div>
           </div>
           <div
-            class="bg-slate-50 dark:bg-slate-700/50 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700"
+            class="bg-slate-50 dark:bg-slate-800/70 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700/70"
           >
-            <div class="text-[11px] text-slate-400">Chính xác</div>
+            <div class="text-[11px] font-medium text-slate-400 mb-0.5">
+              Chính xác
+            </div>
             <div
               id="final-acc"
-              class="text-2xl font-bold text-emerald-600 font-mono"
+              class="text-2xl font-extrabold text-emerald-600 dark:text-emerald-400 font-mono"
             >
               100%
             </div>
-            <div class="text-[10px] text-slate-400">Tỷ lệ gõ đúng</div>
+            <div class="text-[10px] font-semibold text-slate-400 uppercase">
+              Tỷ lệ đúng
+            </div>
           </div>
           <div
-            class="bg-slate-50 dark:bg-slate-700/50 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700"
+            class="bg-slate-50 dark:bg-slate-800/70 p-3.5 rounded-2xl border border-slate-200/80 dark:border-slate-700/70"
           >
-            <div class="text-[11px] text-slate-400">Gợi ý đã xem</div>
+            <div class="text-[11px] font-medium text-slate-400 mb-0.5">
+              Gợi ý đã dùng
+            </div>
             <div
               id="final-hints"
-              class="text-2xl font-bold text-amber-500 font-mono"
+              class="text-2xl font-extrabold text-amber-500 font-mono"
             >
               0
             </div>
-            <div class="text-[10px] text-slate-400">Lần</div>
+            <div class="text-[10px] font-semibold text-slate-400 uppercase">
+              Lần
+            </div>
           </div>
         </div>
 
         <!-- Weak Words / Hinted Words List -->
         <div
-          class="w-full text-left bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/80 mb-6"
+          class="w-full text-left bg-slate-50 dark:bg-slate-800/50 p-4 rounded-2xl border border-slate-200/80 dark:border-slate-800 mb-6"
         >
           <h4
-            class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center justify-between"
+            class="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-3 flex items-center justify-between"
           >
-            <span
-              ><i class="fa-solid fa-bookmark text-amber-500 mr-1.5"></i> Các từ
-              bạn gõ nhầm / cần nhớ kỹ</span
-            >
+            <span>
+              <i class="fa-solid fa-bookmark text-amber-500 mr-1.5"></i>
+              Các từ cần ôn kỹ
+            </span>
             <span
               id="weak-words-count"
-              class="text-indigo-600 dark:text-indigo-400 font-bold"
+              class="text-indigo-600 dark:text-indigo-400 font-mono font-bold bg-indigo-50 dark:bg-indigo-500/15 px-2 py-0.5 rounded-md"
               >0 từ</span
             >
           </h4>
@@ -820,9 +1064,10 @@
         <div class="flex items-center gap-3 w-full">
           <button
             id="btn-restart-essay"
-            class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl transition shadow-lg shadow-indigo-500/25 active:scale-95"
+            class="flex-1 py-3.5 bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-bold rounded-2xl transition shadow-lg shadow-indigo-500/25 active:scale-[0.99]"
           >
-            <i class="fa-solid fa-rotate-right mr-1.5"></i> Ôn Tập Lại Bài Này
+            <i class="fa-solid fa-rotate-right mr-1.5"></i>
+            Ôn Tập Lại Bài Này
           </button>
         </div>
       </div>
@@ -971,6 +1216,8 @@
         isCompleted: false,
         savedEssays: [], // LocalStorage saved items
       };
+
+      let idleCaretTimer = null;
 
       // DOM Element Cache
       const el = {
@@ -1444,12 +1691,12 @@
           const isActive = idx === state.currentWordIndex;
 
           const chip = document.createElement("div");
-          chip.className = `px-3 py-1.5 rounded-xl text-xs font-medium border transition-all cursor-pointer flex flex-col gap-0.5 ${
+          chip.className = `px-3.5 py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer flex flex-col gap-0.5 select-none active:scale-95 ${
             isActive
               ? "bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-500/30"
               : isCompleted
-                ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
-                : "bg-slate-50 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-300"
+                ? "bg-emerald-50/90 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/60"
+                : "bg-slate-50/90 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-slate-700/70 hover:border-indigo-300 dark:hover:border-indigo-500/50"
           }`;
 
           const enLabel =
@@ -1460,9 +1707,12 @@
                 : "•••";
 
           chip.innerHTML = `
-                    <span class="font-bold font-mono ${isActive ? "text-white" : "text-slate-900 dark:text-slate-100"}">${enLabel}</span>
-                    <span class="text-[10px] opacity-90 truncate max-w-[110px]">${wObj.meaning || "nghĩa"}</span>
-                `;
+            <span class="font-bold font-mono flex items-center gap-1 ${isActive ? "text-white" : "text-slate-900 dark:text-slate-100"}">
+              ${isCompleted ? '<i class="fa-solid fa-check text-[9px] text-emerald-500"></i>' : ""}
+              ${enLabel}
+            </span>
+            <span class="text-[10px] opacity-85 truncate max-w-[120px]">${wObj.meaning || "nghĩa"}</span>
+          `;
 
           chip.addEventListener("click", () => {
             speakText(cleanText);
@@ -1486,8 +1736,12 @@
           state.startTime = Date.now();
         }
 
-        // Remove blinking idle animation when user starts typing
+        // Remove blinking idle animation when user starts typing & restore after idle
         el.caret.classList.remove("caret-blinking");
+        clearTimeout(idleCaretTimer);
+        idleCaretTimer = setTimeout(() => {
+          el.caret.classList.add("caret-blinking");
+        }, 1200);
 
         const curCharItem = state.flatChars[state.currentCharIndex];
         if (!curCharItem) return;
@@ -1666,12 +1920,12 @@
 
         if (state.weakWords.size === 0) {
           el.weakWordsList.innerHTML =
-            '<span class="text-emerald-600 font-bold">Xuất sắc! Bạn gõ đúng hoàn toàn không mắc lỗi nào!</span>';
+            '<span class="text-emerald-600 dark:text-emerald-400 font-bold">Xuất sắc! Bạn gõ đúng hoàn toàn không mắc lỗi nào!</span>';
         } else {
           state.weakWords.forEach((word) => {
             const tag = document.createElement("span");
             tag.className =
-              "px-2.5 py-1 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 rounded-lg font-mono font-medium flex items-center gap-1";
+              "px-2.5 py-1 bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/25 rounded-lg font-mono font-medium flex items-center gap-1";
             const vnMeaning = CORE_DICTIONARY[word] || "từ vựng";
             tag.innerHTML = `<span>${word}</span> <span class="text-[10px] opacity-75">(${vnMeaning})</span>`;
             el.weakWordsList.appendChild(tag);
@@ -1930,7 +2184,16 @@
           const title = el.inputEssayTitle.value.trim() || "Bài Essay Mới";
           const enVal = el.inputCustomEn.value.trim();
           const vnVal = el.inputCustomVn.value.trim();
-          if (!enVal) return;
+          if (!enVal) {
+            el.inputCustomEn.focus();
+            el.inputCustomEn.classList.add("ring-2", "ring-rose-500");
+            setTimeout(
+              () =>
+                el.inputCustomEn.classList.remove("ring-2", "ring-rose-500"),
+              1500,
+            );
+            return;
+          }
 
           const vnArray = vnVal
             ? vnVal.split("\n").filter((l) => l.trim().length > 0)
@@ -2069,8 +2332,8 @@
         state.savedEssays.forEach((essay) => {
           const btn = document.createElement("button");
           btn.className =
-            "px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-bold hover:border-indigo-500 transition flex items-center gap-2";
-          btn.innerHTML = `<i class="fa-solid fa-file-lines text-indigo-500"></i> ${essay.title}`;
+            "px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-200 hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition flex items-center gap-2 shadow-2xs";
+          btn.innerHTML = `<i class="fa-solid fa-file-lines text-indigo-500"></i> <span>${essay.title}</span>`;
           btn.addEventListener("click", () => {
             loadEssayObject(essay);
             el.modalCustom.classList.add("hidden");
@@ -2084,7 +2347,15 @@
        */
       async function handleAutoTranslate() {
         const enText = el.inputCustomEn.value.trim();
-        if (!enText) return;
+        if (!enText) {
+          el.inputCustomEn.focus();
+          el.inputCustomEn.classList.add("ring-2", "ring-rose-500");
+          setTimeout(
+            () => el.inputCustomEn.classList.remove("ring-2", "ring-rose-500"),
+            1500,
+          );
+          return;
+        }
 
         el.btnAutoTranslate.innerHTML =
           '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Đang dịch...';
