@@ -3,7 +3,7 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Luyện Gõ & Ghi Nhớ Essay Tiếng Anh</title>
+    <title>Luyện Viết & Ghi Nhớ Essay Tiếng Anh (Pro 60FPS)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons -->
@@ -11,9 +11,9 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
-    <!-- Google Fonts Inter -->
+    <!-- Google Fonts Inter & JetBrains Mono & Plus Jakarta Sans -->
     <link
-      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
       rel="stylesheet"
     />
 
@@ -23,13 +23,13 @@
         theme: {
           extend: {
             fontFamily: {
-              sans: ["Inter", "sans-serif"],
+              sans: ["Plus Jakarta Sans", "sans-serif"],
               mono: ["JetBrains Mono", "monospace"],
             },
             colors: {
               brand: {
-                50: "#eff6ff",
-                100: "#dbeafe",
+                50: "#f0f7ff",
+                100: "#e0effe",
                 500: "#3b82f6",
                 600: "#2563eb",
                 700: "#1d4ed8",
@@ -43,674 +43,939 @@
     <style>
       /* Custom scrollbar */
       ::-webkit-scrollbar {
-        width: 8px;
-        height: 8px;
+        width: 6px;
+        height: 6px;
       }
       ::-webkit-scrollbar-track {
         background: transparent;
       }
       ::-webkit-scrollbar-thumb {
         background: #cbd5e1;
-        border-radius: 4px;
+        border-radius: 3px;
       }
       .dark ::-webkit-scrollbar-thumb {
         background: #475569;
       }
 
-      /* Typing animations and effects */
-      .char-correct {
-        color: #10b981 !important; /* green-500 */
-        border-bottom: 2px solid #10b981;
-      }
-      .char-wrong {
-        color: #ef4444 !important; /* red-500 */
-        background-color: #fee2e2;
-        border-bottom: 2px solid #ef4444;
-        animation: shake 0.2s ease-in-out;
-      }
-      .dark .char-wrong {
-        background-color: #7f1d1d;
-      }
-
-      .char-current {
-        position: relative;
+      /* Smooth Caret Effect (Monkeytype style) */
+      #smooth-caret {
+        position: absolute;
+        width: 2.5px;
         background-color: #3b82f6;
-        color: #ffffff !important;
-        border-radius: 2px;
-        box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
-        animation: pulse-cursor 1.2s infinite;
+        border-radius: 1px;
+        pointer-events: none;
+        transition:
+          transform 80ms cubic-bezier(0.22, 1, 0.36, 1),
+          height 80ms ease,
+          opacity 150ms ease;
+        box-shadow: 0 0 10px rgba(59, 130, 246, 0.7);
+        z-index: 20;
       }
 
-      .char-masked {
-        font-family: "JetBrains Mono", monospace;
-        font-weight: 600;
+      .dark #smooth-caret {
+        background-color: #60a5fa;
+        box-shadow: 0 0 12px rgba(96, 165, 250, 0.8);
       }
 
-      @keyframes pulse-cursor {
+      @keyframes caret-pulse {
         0%,
         100% {
           opacity: 1;
         }
         50% {
-          opacity: 0.7;
+          opacity: 0.3;
         }
       }
 
-      @keyframes shake {
-        0%,
-        100% {
-          transform: translateX(0);
+      .caret-blinking {
+        animation: caret-pulse 1.1s infinite ease-in-out;
+      }
+
+      /* Character styling */
+      .char-span {
+        display: inline-block;
+        position: relative;
+        transition:
+          color 0.1s ease,
+          background-color 0.1s ease,
+          border-color 0.1s ease;
+        border-bottom: 2px solid transparent;
+      }
+
+      .char-correct {
+        color: #10b981 !important; /* Emerald green */
+      }
+      .dark .char-correct {
+        color: #34d399 !important;
+      }
+
+      .char-wrong {
+        color: #ef4444 !important; /* Red */
+        background-color: rgba(239, 68, 68, 0.15);
+        border-bottom-color: #ef4444;
+      }
+
+      .char-shake {
+        animation: char-shake-anim 0.22s cubic-bezier(0.36, 0.07, 0.19, 0.97)
+          both;
+      }
+
+      @keyframes char-shake-anim {
+        10%,
+        90% {
+          transform: translate3d(-1px, 0, 0);
         }
-        25% {
-          transform: translateX(-3px);
+        20%,
+        80% {
+          transform: translate3d(2px, 0, 0);
         }
-        75% {
-          transform: translateX(3px);
+        30%,
+        50%,
+        70% {
+          transform: translate3d(-3px, 0, 0);
+        }
+        40%,
+        60% {
+          transform: translate3d(3px, 0, 0);
         }
       }
 
-      .word-box {
-        transition: all 0.15s ease;
+      .char-hinted {
+        color: #f59e0b !important; /* Amber */
+        font-weight: 700;
+        animation: pulse 1.5s infinite;
       }
-      .word-box.active-word {
+
+      .char-masked-hint {
+        color: #94a3b8;
+      }
+
+      .word-wrapper {
+        display: inline-block;
+        padding: 1px 3px;
+        margin: 0 2px;
+        border-radius: 6px;
+        transition:
+          background-color 0.15s ease,
+          box-shadow 0.15s ease;
+      }
+
+      .word-wrapper.active-word {
         background-color: rgba(59, 130, 246, 0.1);
-        border-radius: 4px;
+      }
+      .dark .word-wrapper.active-word {
+        background-color: rgba(59, 130, 246, 0.2);
+      }
+
+      /* Floating Meaning Pill */
+      #floating-word-pill {
+        position: absolute;
+        transform: translate(-50%, -100%);
+        transition:
+          left 120ms cubic-bezier(0.2, 0.8, 0.2, 1),
+          top 120ms cubic-bezier(0.2, 0.8, 0.2, 1),
+          opacity 150ms ease;
+        pointer-events: none;
+        z-index: 30;
+        white-space: nowrap;
       }
     </style>
   </head>
   <body
-    class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-full flex flex-col font-sans transition-colors duration-200"
+    class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-screen flex flex-col font-sans transition-colors duration-200 select-none"
   >
-    <!-- Header Navigation & Metrics -->
+    <!-- Top Navigation Bar -->
     <header
-      class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 shadow-sm"
+      class="bg-white dark:bg-slate-800/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-700/60 sticky top-0 z-40 shadow-sm"
     >
       <div
         class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4"
       >
-        <!-- Logo & Main Title -->
+        <!-- App Identity & Essay Switcher -->
         <div class="flex items-center gap-3">
           <div
-            class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-blue-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20"
+            class="w-10 h-10 rounded-xl bg-gradient-to-br from-indigo-500 via-blue-600 to-indigo-700 flex items-center justify-center text-white shadow-md shadow-indigo-500/20"
           >
-            <i class="fa-solid font-bold text-lg fa-pen-keyboard"></i>
+            <i class="fa-solid fa-keyboard text-lg"></i>
           </div>
           <div>
-            <h1
-              class="text-lg font-bold leading-tight text-slate-900 dark:text-white"
-            >
-              Luyện Viết Essay
-            </h1>
+            <div class="flex items-center gap-2">
+              <h1
+                class="text-base font-bold text-slate-900 dark:text-white leading-tight"
+              >
+                Luyện Essay Tiếng Anh
+              </h1>
+              <span
+                class="text-[10px] font-bold uppercase tracking-wider bg-indigo-100 dark:bg-indigo-950 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded-full"
+                >60 FPS Engine</span
+              >
+            </div>
             <p
               class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block"
             >
-              Gõ từ theo mẫu & Ghi nhớ ngữ nghĩa
+              Gõ chuẩn phản xạ & Ghi nhớ từ vựng qua ngữ cảnh
             </p>
           </div>
         </div>
 
-        <!-- Dashboard Performance Stats -->
-        <div
-          class="flex items-center gap-3 sm:gap-6 text-xs sm:text-sm font-medium"
-        >
+        <!-- Stats Dashboard Bar -->
+        <div class="flex items-center gap-2 sm:gap-4 text-xs font-semibold">
           <div
-            class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-700/50 px-3 py-1.5 rounded-lg"
+            class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-700/60 px-3 py-1.5 rounded-xl border border-slate-200/60 dark:border-slate-700/50"
           >
             <i class="fa-solid fa-gauge-high text-blue-500"></i>
-            <span class="text-slate-500 dark:text-slate-400 hidden sm:inline"
+            <span class="text-slate-500 dark:text-slate-400 hidden md:inline"
               >Tốc độ:</span
             >
             <span
               id="stat-wpm"
-              class="font-bold text-slate-900 dark:text-white font-mono"
+              class="font-bold text-slate-900 dark:text-white font-mono text-sm"
               >0</span
             >
-            <span class="text-xs text-slate-500">WPM</span>
+            <span class="text-[10px] text-slate-400">WPM</span>
           </div>
           <div
-            class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-700/50 px-3 py-1.5 rounded-lg"
+            class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-700/60 px-3 py-1.5 rounded-xl border border-slate-200/60 dark:border-slate-700/50"
           >
             <i class="fa-solid fa-bullseye text-emerald-500"></i>
-            <span class="text-slate-500 dark:text-slate-400 hidden sm:inline"
+            <span class="text-slate-500 dark:text-slate-400 hidden md:inline"
               >Chính xác:</span
             >
             <span
               id="stat-accuracy"
-              class="font-bold text-slate-900 dark:text-white font-mono"
+              class="font-bold text-slate-900 dark:text-white font-mono text-sm"
               >100%</span
             >
           </div>
           <div
-            class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-700/50 px-3 py-1.5 rounded-lg"
+            class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-700/60 px-3 py-1.5 rounded-xl border border-slate-200/60 dark:border-slate-700/50"
           >
             <i class="fa-solid fa-lightbulb text-amber-500"></i>
-            <span class="text-slate-500 dark:text-slate-400 hidden sm:inline"
+            <span class="text-slate-500 dark:text-slate-400 hidden md:inline"
               >Gợi ý:</span
             >
             <span
               id="stat-hints"
-              class="font-bold text-slate-900 dark:text-white font-mono"
+              class="font-bold text-slate-900 dark:text-white font-mono text-sm"
               >0</span
             >
           </div>
         </div>
 
-        <!-- Action Controls -->
+        <!-- Header Action Controls -->
         <div class="flex items-center gap-2">
           <button
-            id="btn-custom-essay"
-            title="Dán bài mẫu mới"
-            class="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs sm:text-sm font-medium transition shadow-sm"
+            id="btn-open-essay-modal"
+            title="Quản lý & Dán bài mẫu mới"
+            class="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold transition shadow-sm shadow-indigo-500/20 active:scale-95"
           >
-            <i class="fa-solid fa-paste"></i>
-            <span class="hidden md:inline">Dán mẫu mới</span>
+            <i class="fa-solid fa-folder-plus"></i>
+            <span class="hidden md:inline">Kho Bài Essay</span>
           </button>
           <button
             id="btn-theme-toggle"
-            title="Chuyển đổi Chế độ Sáng/Tối"
-            class="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition"
+            title="Chuyển chế độ Sáng/Tối"
+            class="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition active:scale-95"
           >
-            <i class="fa-solid fa-moon dark:hidden text-lg"></i>
-            <span class="hidden dark:inline text-lg"
-              ><i class="fa-solid fa-sun"></i
+            <i class="fa-solid fa-moon dark:hidden text-base"></i>
+            <span class="hidden dark:inline text-base"
+              ><i class="fa-solid fa-sun text-amber-400"></i
             ></span>
           </button>
         </div>
       </div>
 
-      <!-- Progress Bar -->
-      <div class="w-full bg-slate-200 dark:bg-slate-700 h-1.5">
+      <!-- Progress Indicator Bar -->
+      <div class="w-full bg-slate-100 dark:bg-slate-700/40 h-1">
         <div
           id="essay-progress-bar"
-          class="bg-gradient-to-r from-blue-500 to-indigo-600 h-1.5 w-0 transition-all duration-300"
+          class="bg-gradient-to-r from-blue-500 via-indigo-500 to-emerald-400 h-1 w-0 transition-all duration-200"
         ></div>
       </div>
     </header>
 
-    <!-- Main Content Area -->
+    <!-- Main Workspace -->
     <main
-      class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 flex flex-col gap-4 sm:gap-6"
+      class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 flex flex-col gap-4 sm:gap-5"
     >
-      <!-- Controls & Customization Toolbar -->
+      <!-- Interactive Controls Toolbar -->
       <div
-        class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-wrap items-center justify-between gap-4"
+        class="bg-white dark:bg-slate-800 p-3 sm:p-4 rounded-2xl border border-slate-200 dark:border-slate-700/70 shadow-sm flex flex-wrap items-center justify-between gap-3 text-xs"
       >
-        <!-- Visibility & Display Modes -->
-        <div class="flex flex-wrap items-center gap-3">
+        <!-- Visibility & Error Modes Segmented Controls -->
+        <div class="flex flex-wrap items-center gap-2 sm:gap-3">
+          <!-- Visibility Level Segment -->
           <div
-            class="flex items-center gap-1 bg-slate-100 dark:bg-slate-700 p-1 rounded-lg text-xs font-semibold"
+            class="flex items-center bg-slate-100 dark:bg-slate-700/70 p-1 rounded-xl font-semibold"
           >
             <button
-              id="mode-mask"
-              class="mode-btn active px-3 py-1.5 rounded-md bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-sm transition"
+              id="mode-ghost"
+              class="mode-btn px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 transition"
+              title="Hiện chữ mờ để gõ theo"
             >
-              <i class="fa-solid fa-eye-slash mr-1"></i> Ẩn từ (_ _ _)
+              <i class="fa-solid fa-ghost mr-1 text-indigo-400"></i> Ghost (Mờ)
             </button>
             <button
               id="mode-first"
-              class="mode-btn px-3 py-1.5 rounded-md text-slate-600 dark:text-slate-300 hover:text-slate-900 transition"
+              class="mode-btn px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 transition"
+              title="Chỉ hiện chữ cái đầu từ"
             >
-              <i class="fa-solid fa-font mr-1"></i> Gợi ý chữ đầu (s _ _ _)
+              <i class="fa-solid fa-font mr-1 text-blue-400"></i> s _ _ _ (Đầu
+              từ)
             </button>
             <button
-              id="mode-ghost"
-              class="mode-btn px-3 py-1.5 rounded-md text-slate-600 dark:text-slate-300 hover:text-slate-900 transition"
+              id="mode-mask"
+              class="mode-btn active px-3 py-1.5 rounded-lg bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-sm transition"
+              title="Ẩn chữ hoàn toàn"
             >
-              <i class="fa-solid fa-ghost mr-1"></i> Mẫu mờ (Ghost)
+              <i class="fa-solid fa-eye-slash mr-1 text-amber-500"></i> _ _ _
+              (Ẩn hết)
             </button>
           </div>
 
+          <!-- Error Mode Toggle -->
           <div
-            class="h-6 w-px bg-slate-300 dark:bg-slate-700 hidden sm:block"
-          ></div>
+            class="flex items-center bg-slate-100 dark:bg-slate-700/70 p-1 rounded-xl font-semibold"
+          >
+            <button
+              id="err-mode-stop"
+              class="err-mode-btn active px-3 py-1.5 rounded-lg bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-sm transition"
+              title="Chặn gõ tiếp khi sai, sai 2 lần tự hiện gợi ý"
+            >
+              <i class="fa-solid fa-shield-halved mr-1 text-emerald-500"></i>
+              Học Nhanh (Khóa sai)
+            </button>
+            <button
+              id="err-mode-free"
+              class="err-mode-btn px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 transition"
+              title="Cho phép gõ tự do và xóa bằng Backspace"
+            >
+              <i class="fa-solid fa-delete-left mr-1 text-rose-500"></i> Gõ Tự
+              Do
+            </button>
+          </div>
 
-          <!-- View Mode: Sentence vs Full Paragraph -->
+          <!-- View Layout Toggle -->
           <div
-            class="flex items-center gap-1 bg-slate-100 dark:bg-slate-700 p-1 rounded-lg text-xs font-semibold"
+            class="flex items-center bg-slate-100 dark:bg-slate-700/70 p-1 rounded-xl font-semibold hidden md:flex"
           >
             <button
               id="view-sentence"
-              class="view-btn active px-3 py-1.5 rounded-md bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-sm transition"
+              class="view-btn active px-3 py-1.5 rounded-lg bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-sm transition"
             >
               <i class="fa-solid fa-align-left mr-1"></i> Từng câu
             </button>
             <button
               id="view-full"
-              class="view-btn px-3 py-1.5 rounded-md text-slate-600 dark:text-slate-300 hover:text-slate-900 transition"
+              class="view-btn px-3 py-1.5 rounded-lg text-slate-600 dark:text-slate-300 transition"
             >
-              <i class="fa-solid fa-paragraph mr-1"></i> Toàn đoạn
+              <i class="fa-solid fa-paragraph mr-1"></i> Cả bài
             </button>
           </div>
         </div>
 
-        <!-- Quick Action Helpers -->
-        <div class="flex items-center gap-2 text-xs font-medium">
+        <!-- Quick Action Helpers & Shortcuts -->
+        <div class="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+          <button
+            id="btn-speak-rate"
+            class="px-2.5 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 font-bold transition text-slate-600 dark:text-slate-300"
+            title="Đổi tốc độ phát âm"
+          >
+            <span id="rate-label">0.9x</span>
+          </button>
           <button
             id="btn-speak-sentence"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition text-slate-700 dark:text-slate-300"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition font-medium text-slate-700 dark:text-slate-300"
           >
-            <i class="fa-solid fa-volume-high text-indigo-500"></i> Đọc câu (F2)
+            <i class="fa-solid fa-volume-high text-indigo-500"></i> Nghe câu
+            <kbd class="hidden sm:inline opacity-60">Ctrl+S</kbd>
           </button>
           <button
             id="btn-word-hint"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 transition"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-700 dark:text-amber-400 border border-amber-500/30 transition font-medium"
           >
-            <i class="fa-solid fa-key"></i> Gợi ý từ (Tab)
+            <i class="fa-solid fa-key"></i> Gợi ý
+            <kbd class="hidden sm:inline opacity-60">Tab</kbd>
           </button>
           <button
             id="btn-fill-word"
-            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30 transition"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-blue-500/10 hover:bg-blue-500/20 text-blue-700 dark:text-blue-400 border border-blue-500/30 transition font-medium"
           >
-            <i class="fa-solid fa-wand-magic-sparkles"></i> Điền từ (Ctrl+Space)
-          </button>
-          <button
-            id="btn-reset-sentence"
-            class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500"
-            title="Làm lại câu hiện tại (Esc)"
-          >
-            <i class="fa-solid fa-rotate-left"></i>
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Điền từ
+            <kbd class="hidden sm:inline opacity-60">Shift+Space</kbd>
           </button>
         </div>
       </div>
 
-      <!-- Primary Typing Container -->
+      <!-- Primary High-Performance Typing Arena -->
       <div
         id="typing-wrapper"
-        class="relative bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 sm:p-8 shadow-sm flex-1 flex flex-col justify-center min-h-[260px] cursor-text transition-all focus-within:ring-2 focus-within:ring-indigo-500"
-        onclick="focusHiddenInput()"
+        class="relative bg-white dark:bg-slate-800/90 rounded-3xl border border-slate-200 dark:border-slate-700/80 p-6 sm:p-10 shadow-sm min-h-[280px] flex flex-col justify-between overflow-hidden cursor-text"
       >
-        <!-- Sentence Navigation Indicator (Sentence view) -->
-        <div
-          id="sentence-step-badge"
-          class="mb-4 inline-flex items-center gap-2 self-start px-3 py-1 bg-slate-100 dark:bg-slate-700/60 rounded-full text-xs text-slate-600 dark:text-slate-300 font-semibold"
-        >
-          <span
-            >Câu <span id="current-sentence-num">1</span> /
-            <span id="total-sentences-num">8</span></span
+        <!-- Sentence Stepper Header -->
+        <div class="flex items-center justify-between gap-4 mb-4">
+          <div
+            id="sentence-step-badge"
+            class="inline-flex items-center gap-2 px-3.5 py-1.5 bg-slate-100 dark:bg-slate-700/60 rounded-full text-xs text-slate-600 dark:text-slate-300 font-semibold border border-slate-200/50 dark:border-slate-700/40"
           >
-          <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+            <button
+              id="btn-prev-sent"
+              title="Câu trước (Phím Mũi tên Trái)"
+              class="hover:text-indigo-600 p-0.5"
+            >
+              <i class="fa-solid fa-chevron-left"></i>
+            </button>
+            <span
+              >Câu <span id="current-sentence-num">1</span> /
+              <span id="total-sentences-num">8</span></span
+            >
+            <button
+              id="btn-next-sent"
+              title="Câu sau (Phím Mũi tên Phải)"
+              class="hover:text-indigo-600 p-0.5"
+            >
+              <i class="fa-solid fa-chevron-right"></i>
+            </button>
+            <span
+              class="w-1.5 h-1.5 rounded-full bg-slate-300 dark:bg-slate-600"
+            ></span>
+            <span
+              id="sentence-progress-percent"
+              class="text-indigo-600 dark:text-indigo-400 font-bold"
+              >0%</span
+            >
+          </div>
+
+          <div class="flex items-center gap-2 text-xs text-slate-400">
+            <span class="hidden sm:inline"
+              ><i class="fa-solid fa-bolt text-amber-400 mr-1"></i>Chỉ cần gõ
+              trực tiếp (Không cần click)</span
+            >
+            <button
+              id="btn-reset-sentence"
+              title="Tập lại câu này (Esc)"
+              class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500"
+            >
+              <i class="fa-solid fa-rotate-left"></i>
+            </button>
+          </div>
+        </div>
+
+        <!-- Dynamic Floating Meaning Pill -->
+        <div
+          id="floating-word-pill"
+          class="opacity-0 bg-slate-900/90 dark:bg-indigo-950/95 text-white dark:text-indigo-100 text-xs py-1 px-3 rounded-full shadow-lg border border-indigo-500/30 font-medium flex items-center gap-1.5 backdrop-blur-sm"
+        >
+          <span id="pill-vn-text">Nghĩa tiếng Việt</span>
           <span
-            id="sentence-progress-percent"
-            class="text-indigo-600 dark:text-indigo-400"
-            >0% hoàn thành</span
+            id="pill-en-hint"
+            class="hidden font-bold text-amber-300 font-mono border-l border-slate-700 pl-1.5"
+            >target</span
           >
         </div>
 
-        <!-- Visual Interactive Paragraph & Sentence Words Container -->
+        <!-- Smooth Monkeytype Gliding Caret -->
+        <div id="smooth-caret" class="caret-blinking"></div>
+
+        <!-- Text Display Area (Pre-rendered Spans for zero layout reflows) -->
         <div
           id="essay-display"
-          class="font-mono text-lg sm:text-2xl leading-relaxed sm:leading-loose tracking-wide select-none outline-none break-words"
+          class="relative z-10 font-mono text-xl sm:text-2xl sm:leading-relaxed tracking-wide select-none outline-none break-words my-auto py-2"
         >
-          <!-- Dynamically populated letters & words -->
+          <!-- Dynamically populated DOM spans -->
         </div>
 
-        <!-- Hidden Input Receiver -->
-        <input
-          type="text"
-          id="hidden-input"
-          class="opacity-0 absolute -z-10 top-0 left-0 w-1 h-1"
-          autocomplete="off"
-          autocorrect="off"
-          autocapitalize="off"
-          spellcheck="false"
-        />
-
-        <!-- Focus prompt tooltip when unfocused -->
+        <!-- Keyboard focus prompt fallback notice -->
         <div
           id="focus-notice"
-          class="hidden absolute inset-0 bg-slate-900/10 dark:bg-slate-900/30 backdrop-blur-[1px] rounded-2xl flex items-center justify-center"
+          class="hidden absolute inset-0 bg-slate-900/10 dark:bg-slate-900/40 backdrop-blur-[2px] z-30 rounded-3xl flex items-center justify-center"
         >
           <span
-            class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-lg flex items-center gap-2"
+            class="bg-indigo-600 text-white px-5 py-2.5 rounded-2xl text-sm font-semibold shadow-xl flex items-center gap-2 animate-bounce"
           >
-            <i class="fa-solid fa-arrow-pointer"></i> Nhấp vào đây để tiếp tục
-            gõ
+            <i class="fa-solid fa-hand-pointer"></i> Nhấp để tiếp tục gõ
           </span>
         </div>
       </div>
 
-      <!-- Translation & Vocabulary Recognition Bottom Panel -->
-      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
-        <!-- Current Sentence Vietnamese Translation Card -->
+      <!-- Anchored Sentence Translation & Word Lookup Panel -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-5">
+        <!-- High Contrast Sentence Translation Bar -->
         <div
-          class="lg:col-span-2 bg-gradient-to-br from-indigo-900/90 to-slate-900 text-white rounded-xl p-5 shadow-sm border border-indigo-700/50 flex flex-col justify-between gap-4"
+          class="lg:col-span-2 bg-gradient-to-br from-indigo-950 via-slate-900 to-slate-950 text-white rounded-2xl p-5 shadow-sm border border-indigo-800/40 flex flex-col justify-between gap-3"
         >
           <div>
             <div class="flex items-center justify-between gap-2 mb-2">
               <div
                 class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-300"
               >
-                <i class="fa-solid fa-language text-base text-indigo-400"></i>
-                Dịch nghĩa câu hiện tại (Đang gõ)
+                <i class="fa-solid fa-language text-indigo-400 text-sm"></i>
+                Bản dịch Tiếng Việt (Câu hiện tại)
               </div>
-              <span
-                class="text-xs bg-indigo-800/80 text-indigo-200 px-2.5 py-0.5 rounded-full border border-indigo-600/40"
-                >Dịch chuẩn</span
+              <button
+                id="btn-speak-vn"
+                class="text-xs text-indigo-300 hover:text-white transition flex items-center gap-1 bg-indigo-900/50 px-2.5 py-1 rounded-lg border border-indigo-700/50"
               >
+                <i class="fa-solid fa-volume-low"></i> Phổ âm TV
+              </button>
             </div>
             <p
               id="current-sentence-vn"
-              class="text-base sm:text-lg font-medium text-slate-100 leading-relaxed min-h-[3.5rem]"
+              class="text-base sm:text-lg font-semibold text-indigo-50 leading-relaxed min-h-[3.2rem]"
             >
               <!-- Translated sentence appears here -->
             </p>
           </div>
 
           <div
-            class="flex items-center justify-between text-xs text-indigo-300/80 pt-3 border-t border-indigo-800/60"
+            class="text-[11px] text-indigo-300/70 pt-2 border-t border-indigo-900/60 flex items-center justify-between"
           >
             <span
-              ><i class="fa-solid fa-keyboard mr-1"></i> Mẹo: Quan sát câu dịch
-              tiếng Việt ở trên để suy luận từ tiếng Anh tương ứng.</span
+              ><i class="fa-solid fa-circle-info mr-1"></i>Gợi ý: Nhấp vào bất
+              kỳ từ nào bên dưới để nghe phát âm & xem chi tiết.</span
             >
-            <button
-              id="btn-speak-vn"
-              class="hover:text-white transition flex items-center gap-1"
+            <span class="font-mono"
+              >Shortcuts: Tab (Gợi ý) | Shift+Space (Điền từ)</span
             >
-              <i class="fa-solid fa-volume-low"></i> Đọc dịch
-            </button>
           </div>
         </div>
 
-        <!-- Current Word Recognition & Detailed Meaning Card -->
+        <!-- Current Focused Word Card -->
         <div
-          class="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between"
+          class="bg-white dark:bg-slate-800 rounded-2xl p-5 border border-slate-200 dark:border-slate-700/80 shadow-sm flex flex-col justify-between"
         >
           <div>
-            <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center justify-between mb-2">
               <span
-                class="text-xs font-bold text-slate-400 uppercase tracking-wider"
+                class="text-[11px] font-bold text-slate-400 uppercase tracking-wider"
                 >Từ hiện tại</span
               >
               <span
                 id="word-length-badge"
-                class="text-xs font-mono font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded"
-                >0 chữ cái</span
+                class="text-xs font-mono font-medium bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-300 px-2.5 py-0.5 rounded-full border border-indigo-200/50 dark:border-indigo-800/40"
+                >0 ký tự</span
               >
             </div>
 
             <div class="flex items-baseline justify-between gap-2 mb-1">
               <h3
                 id="target-word-en"
-                class="text-xl sm:text-2xl font-bold font-mono text-indigo-600 dark:text-indigo-400 tracking-tight"
+                class="text-2xl font-bold font-mono text-indigo-600 dark:text-indigo-400 tracking-tight"
               >
                 •••••
               </h3>
               <button
                 id="btn-speak-word"
                 title="Phát âm từ này"
-                class="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition p-1"
+                class="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition p-1 text-lg"
               >
-                <i class="fa-solid fa-volume-high text-lg"></i>
+                <i class="fa-solid fa-volume-high"></i>
               </button>
             </div>
 
             <div
               id="target-word-vn"
-              class="text-slate-700 dark:text-slate-200 text-base font-semibold mt-1"
+              class="text-slate-700 dark:text-slate-200 text-sm font-semibold mt-1"
             >
-              (Nhấp hoặc gõ để xem nghĩa)
+              (Đang tải...)
             </div>
           </div>
 
           <div
-            class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between text-xs"
+            class="mt-3 pt-2.5 border-t border-slate-100 dark:border-slate-700/60 flex items-center justify-between text-xs"
           >
             <button
               id="btn-toggle-word-peek"
-              class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium flex items-center gap-1"
+              class="text-indigo-600 dark:text-indigo-400 hover:underline font-bold flex items-center gap-1"
             >
-              <i class="fa-solid fa-eye"></i> Hiện đáp án từ này
+              <i class="fa-solid fa-eye"></i> Xem đáp án từ này
             </button>
-            <span class="text-slate-400"
-              >Phím tắt:
-              <kbd
-                class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600"
-                >Tab</kbd
-              ></span
-            >
           </div>
         </div>
       </div>
 
-      <!-- Sentence Word-by-Word Breakdown Strip -->
+      <!-- Sentence Word-by-Word Breakdown Chips Strip -->
       <div
-        class="bg-white dark:bg-slate-800 rounded-xl p-4 sm:p-5 border border-slate-200 dark:border-slate-700 shadow-sm"
+        class="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-5 border border-slate-200 dark:border-slate-700/80 shadow-sm"
       >
         <h3
           class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center justify-between"
         >
           <span
             ><i class="fa-solid fa-layer-group text-indigo-500 mr-1.5"></i> Chi
-            tiết từ vựng trong câu này</span
+            tiết từ vựng trong câu</span
           >
           <span class="text-slate-500 text-[11px] font-normal"
-            >Rê chuột hoặc nhấp vào từng thẻ để xem từ mẫu</span
+            >Nhấp vào thẻ từ để nghe phát âm & hiện nghĩa</span
           >
         </h3>
 
         <div
           id="words-breakdown-container"
-          class="flex flex-wrap gap-2 sm:gap-3 max-h-44 overflow-y-auto pr-1"
+          class="flex flex-wrap gap-2 max-h-44 overflow-y-auto pr-1"
         >
           <!-- Dynamic Word Chips -->
         </div>
       </div>
     </main>
 
-    <!-- Custom Essay Modal -->
+    <!-- Modal: Essay Library & Custom Manager -->
     <div
       id="modal-custom"
       class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden"
     >
       <div
-        class="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col gap-4 max-h-[90vh] overflow-y-auto"
+        class="bg-white dark:bg-slate-800 rounded-3xl max-w-3xl w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col gap-5 max-h-[90vh] overflow-y-auto"
       >
         <div
-          class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3"
+          class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-4"
         >
-          <h2
-            class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2"
-          >
-            <i class="fa-solid fa-file-pen text-indigo-600"></i> Dán bài mẫu mới
-            để tập gõ
-          </h2>
+          <div>
+            <h2
+              class="text-xl font-bold text-slate-900 dark:text-white flex items-center gap-2"
+            >
+              <i class="fa-solid fa-folder-open text-indigo-600"></i> Quản Lý &
+              Thêm Bài Essay Mới
+            </h2>
+            <p class="text-xs text-slate-500 dark:text-slate-400">
+              Chọn bài mẫu có sẵn hoặc dán văn bản tiếng Anh mới để thực hành.
+            </p>
+          </div>
           <button
             id="btn-close-modal"
-            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold p-1"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-2xl font-bold p-1"
           >
             &times;
           </button>
         </div>
 
+        <!-- Saved Essays Quick Picker -->
+        <div>
+          <label class="block text-xs font-bold uppercase text-slate-500 mb-2"
+            >Danh sách bài học đã lưu</label
+          >
+          <div id="essay-saved-list" class="flex flex-wrap gap-2 mb-4">
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
         <div class="space-y-4">
           <div>
-            <label
-              class="block text-xs font-semibold uppercase text-slate-500 mb-1"
-              >Đoạn văn tiếng Anh (Template English)</label
+            <label class="block text-xs font-bold uppercase text-slate-500 mb-1"
+              >Tiêu đề bài essay</label
+            >
+            <input
+              id="input-essay-title"
+              type="text"
+              class="w-full px-3.5 py-2 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-medium text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+              placeholder="VD: Spending Habits Essay"
+            />
+          </div>
+
+          <div>
+            <label class="block text-xs font-bold uppercase text-slate-500 mb-1"
+              >Đoạn văn tiếng Anh (English Essay Text)</label
             >
             <textarea
               id="input-custom-en"
               rows="5"
-              class="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-              placeholder="Dán đoạn văn tiếng Anh cần ôn tập tại đây..."
+              class="w-full p-3.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+              placeholder="Dán đoạn văn tiếng Anh vào đây..."
             ></textarea>
           </div>
 
           <div>
             <div class="flex items-center justify-between mb-1">
-              <label
-                class="block text-xs font-semibold uppercase text-slate-500"
-                >Bản dịch tiếng Việt (Không bắt buộc)</label
+              <label class="block text-xs font-bold uppercase text-slate-500"
+                >Bản dịch tiếng Việt (Theo từng câu)</label
               >
               <button
                 id="btn-auto-translate"
-                class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+                class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-bold flex items-center gap-1"
               >
-                <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Tự động dịch
-                sang Tiếng Việt
+                <i class="fa-solid fa-wand-magic-sparkles"></i> Tự động tách câu
+                & Dịch Tiếng Việt
               </button>
             </div>
             <textarea
               id="input-custom-vn"
               rows="4"
-              class="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
-              placeholder="Nhập bản dịch tiếng Việt tương ứng theo từng câu (hoặc nhấn Tự động dịch ở trên)..."
+              class="w-full p-3.5 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+              placeholder="Mỗi dòng là bản dịch tương ứng của 1 câu (Hoặc nhấn Tự động dịch ở trên)..."
             ></textarea>
           </div>
         </div>
 
         <div
-          class="flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-700 pt-4"
+          class="flex items-center justify-between border-t border-slate-100 dark:border-slate-700 pt-4"
         >
           <button
             id="btn-load-default"
-            class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition"
+            class="px-4 py-2 text-xs font-bold text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition"
           >
-            Tải bài mẫu mặc định
+            Tải Bài Mẫu Mặc Định
           </button>
-          <button
-            id="btn-save-custom"
-            class="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md transition flex items-center gap-2"
-          >
-            <i class="fa-solid fa-check"></i> Bắt đầu ôn tập bài này
-          </button>
+          <div class="flex items-center gap-2">
+            <button
+              id="btn-save-custom"
+              class="px-5 py-2 text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md transition flex items-center gap-2"
+            >
+              <i class="fa-solid fa-check"></i> Lưu & Ôn Tập Bài Này
+            </button>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Completion & Weak Words Review Modal -->
+    <!-- Modal: Celebration & Weak Words Review -->
     <div
       id="modal-completion"
-      class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden"
+      class="fixed inset-0 bg-slate-900/75 backdrop-blur-md z-50 flex items-center justify-center p-4 hidden"
     >
       <div
-        class="bg-white dark:bg-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 text-center flex flex-col items-center"
+        class="bg-white dark:bg-slate-800 rounded-3xl max-w-lg w-full p-6 sm:p-8 shadow-2xl border border-slate-200 dark:border-slate-700 text-center flex flex-col items-center"
       >
         <div
-          class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mb-3 shadow-inner"
+          class="w-20 h-20 rounded-full bg-emerald-100 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center text-4xl mb-3 shadow-inner"
         >
           <i class="fa-solid fa-trophy"></i>
         </div>
 
         <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-1">
-          Hoàn thành xuất sắc!
+          Hoàn Thành Bài Viết!
         </h2>
-        <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">
-          Bạn đã gõ chính xác toàn bộ bài mẫu essay.
+        <p class="text-xs text-slate-500 dark:text-slate-400 mb-6">
+          Bạn đã gõ hoàn tất toàn bộ câu trong bài mẫu essay.
         </p>
 
-        <!-- Final Stats Grid -->
+        <!-- Final Metrics -->
         <div class="grid grid-cols-3 gap-3 w-full mb-6">
           <div
-            class="bg-slate-50 dark:bg-slate-700/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700"
+            class="bg-slate-50 dark:bg-slate-700/50 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700"
           >
-            <div class="text-xs text-slate-400">Tốc độ</div>
+            <div class="text-[11px] text-slate-400">Tốc độ gõ</div>
             <div
               id="final-wpm"
-              class="text-xl font-bold text-slate-800 dark:text-white font-mono"
+              class="text-2xl font-bold text-slate-900 dark:text-white font-mono"
             >
               0
             </div>
             <div class="text-[10px] text-slate-400">WPM</div>
           </div>
           <div
-            class="bg-slate-50 dark:bg-slate-700/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700"
+            class="bg-slate-50 dark:bg-slate-700/50 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700"
           >
-            <div class="text-xs text-slate-400">Chính xác</div>
+            <div class="text-[11px] text-slate-400">Chính xác</div>
             <div
               id="final-acc"
-              class="text-xl font-bold text-emerald-600 font-mono"
+              class="text-2xl font-bold text-emerald-600 font-mono"
             >
               100%
             </div>
-            <div class="text-[10px] text-slate-400">Độ đúng</div>
+            <div class="text-[10px] text-slate-400">Tỷ lệ gõ đúng</div>
           </div>
           <div
-            class="bg-slate-50 dark:bg-slate-700/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700"
+            class="bg-slate-50 dark:bg-slate-700/50 p-3.5 rounded-2xl border border-slate-200 dark:border-slate-700"
           >
-            <div class="text-xs text-slate-400">Số gợi ý</div>
+            <div class="text-[11px] text-slate-400">Gợi ý đã xem</div>
             <div
               id="final-hints"
-              class="text-xl font-bold text-amber-500 font-mono"
+              class="text-2xl font-bold text-amber-500 font-mono"
             >
               0
             </div>
-            <div class="text-[10px] text-slate-400">Lần xem</div>
+            <div class="text-[10px] text-slate-400">Lần</div>
           </div>
         </div>
 
-        <!-- Weak / Hinted Words Review Box -->
+        <!-- Weak Words / Hinted Words List -->
         <div
-          class="w-full text-left bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 mb-6"
+          class="w-full text-left bg-slate-50 dark:bg-slate-900 p-4 rounded-2xl border border-slate-200 dark:border-slate-700/80 mb-6"
         >
           <h4
-            class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center justify-between"
+            class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2.5 flex items-center justify-between"
           >
             <span
-              ><i class="fa-solid fa-bookmark text-amber-500 mr-1"></i> Các từ
-              bạn cần lưu ý ôn lại</span
+              ><i class="fa-solid fa-bookmark text-amber-500 mr-1.5"></i> Các từ
+              bạn gõ nhầm / cần nhớ kỹ</span
             >
-            <span id="weak-words-count" class="text-indigo-600 font-bold"
+            <span
+              id="weak-words-count"
+              class="text-indigo-600 dark:text-indigo-400 font-bold"
               >0 từ</span
             >
           </h4>
           <div
             id="weak-words-list"
-            class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1 text-xs"
+            class="flex flex-wrap gap-1.5 max-h-36 overflow-y-auto pr-1 text-xs"
           >
-            <!-- Populated dynamically -->
+            <!-- Dynamic items -->
           </div>
         </div>
 
         <div class="flex items-center gap-3 w-full">
           <button
             id="btn-restart-essay"
-            class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition shadow-md"
+            class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-2xl transition shadow-lg shadow-indigo-500/25 active:scale-95"
           >
-            <i class="fa-solid fa-rotate-right mr-1"></i> Ôn tập lại từ đầu
+            <i class="fa-solid fa-rotate-right mr-1.5"></i> Ôn Tập Lại Bài Này
           </button>
         </div>
       </div>
     </div>
 
-    <!-- Application Core Logic Script -->
+    <!-- Application Script -->
     <script>
       /**
-       * DEFAULT SAMPLE ESSAY & SENTENCE-BY-SENTENCE DICTIONARY MAPPING
+       * DEFAULT SAMPLE ESSAY & INTEGRATED DICTIONARY
        */
+      const DEFAULT_ESSAY_TITLE = "Spending Habits Essay";
       const DEFAULT_ESSAY_TEXT = `My spending habits were often very bad in the past because I bought many products that I did not really need. For example, when I saw big sales on online shopping apps or cool items in video games, I spent money quickly without thinking carefully. Sometimes, I also spent too much money on fast food, coffee, and hanging out with friends on weekends. For me, that was a waste of money, and I often ran out of cash before the end of the month. However, I am trying to change my habits and learn how to spend money and save money wisely. Now, before I buy anything, I always ask myself if it is truly necessary for my studies or daily life. I also write down what I buy every week. This simple habit helps me control my budget and save money for the future.`;
 
-      const DEFAULT_SENTENCES_VN = [];
+      const DEFAULT_SENTENCES_VN = [
+        "Thói quen tiêu dùng của tôi trong quá khứ thường rất tệ vì tôi đã mua nhiều sản phẩm mà bản thân không thực sự cần.",
+        "Ví dụ, khi thấy các đợt giảm giá lớn trên ứng dụng mua sắm trực tuyến hoặc đồ xịn trong trò chơi điện tử, tôi đã chi tiền rất nhanh mà không suy nghĩ kỹ.",
+        "Đôi khi, tôi cũng tiêu quá nhiều tiền vào thức ăn nhanh, cà phê và đi chơi với bạn bè vào cuối tuần.",
+        "Đối với tôi, đó là sự lãng phí tiền bạc, và tôi thường hết tiền mặt trước khi hết tháng.",
+        "Tuy nhiên, tôi đang nỗ lực thay đổi thói quen của mình và học cách chi tiêu cũng như tiết kiệm tiền một cách khôn ngoan.",
+        "Bây giờ, trước khi mua bất cứ thứ gì, tôi luôn tự hỏi liệu nó có thực sự cần thiết cho việc học hay cuộc sống hàng ngày của tôi hay không.",
+        "Tôi cũng ghi chép lại những gì mình đã mua mỗi tuần.",
+        "Thói quen đơn giản này giúp tôi kiểm soát ngân sách của mình và tiết kiệm tiền cho tương lai.",
+      ];
 
-      // Built-in Word Meaning Dictionary for default essay
-      const DEFAULT_WORD_DICT = {};
+      const CORE_DICTIONARY = {
+        my: "của tôi",
+        spending: "sự tiêu dùng, chi tiêu",
+        habits: "thói quen",
+        were: "thì, là, ở (quá khứ)",
+        often: "thường xuyên",
+        very: "rất",
+        bad: "tệ, xấu",
+        in: "trong",
+        the: "cái, những (từ xác định)",
+        past: "quá khứ",
+        because: "bởi vì",
+        i: "tôi",
+        bought: "đã mua",
+        many: "nhiều",
+        products: "sản phẩm",
+        that: "mà / điều đó",
+        did: "đã (trợ động từ)",
+        not: "không",
+        really: "thực sự",
+        need: "cần",
+        for: "cho, đối với",
+        example: "ví dụ",
+        when: "khi",
+        saw: "đã thấy",
+        big: "lớn",
+        sales: "đợt giảm giá, sự bán hàng",
+        on: "trên",
+        online: "trực tuyến",
+        shopping: "mua sắm",
+        apps: "ứng dụng",
+        or: "hoặc",
+        cool: "xịn, ngầu, hay ho",
+        items: "món đồ, vật phẩm",
+        video: "trò chơi video",
+        games: "trò chơi",
+        spent: "đã chi tiêu",
+        money: "tiền bạc",
+        quickly: "nhanh chóng",
+        without: "mà không",
+        thinking: "suy nghĩ",
+        carefully: "cẩn thận, kỹ lưỡng",
+        sometimes: "đôi khi",
+        also: "cũng",
+        too: "quá",
+        much: "nhiều",
+        fast: "nhanh",
+        food: "thức ăn",
+        coffee: "cà phê",
+        and: "và",
+        hanging: "tụ tập, đi chơi",
+        out: "ngoài",
+        with: "với",
+        friends: "bạn bè",
+        weekends: "cuối tuần",
+        me: "tôi (tân ngữ)",
+        was: "đã là",
+        a: "một",
+        waste: "sự lãng phí",
+        of: "của",
+        ran: "đã chạy / đã hết",
+        cash: "tiền mặt",
+        before: "trước khi",
+        end: "kết thúc, cuối",
+        month: "tháng",
+        however: "tuy nhiên",
+        am: "là / đang",
+        trying: "đang cố gắng",
+        to: "để",
+        change: "thay đổi",
+        learn: "học",
+        how: "cách thức",
+        save: "tiết kiệm",
+        wisely: "khôn ngoan",
+        now: "bây giờ",
+        buy: "mua",
+        anything: "bất cứ thứ gì",
+        always: "luôn luôn",
+        ask: "hỏi",
+        myself: "chính bản thân tôi",
+        if: "liệu / nếu",
+        it: "nó",
+        is: "là / thì",
+        truly: "thực sự",
+        necessary: "cần thiết",
+        studies: "việc học tập",
+        daily: "hàng ngày",
+        life: "cuộc sống",
+        write: "viết",
+        down: "xuống, lại",
+        what: "những gì",
+        every: "mỗi",
+        week: "tuần",
+        this: "điều này, thói quen này",
+        simple: "đơn giản",
+        habit: "thói quen",
+        helps: "giúp đỡ",
+        control: "kiểm soát",
+        budget: "ngân sách",
+        future: "tương lai",
+      };
 
       /**
        * STATE MANAGEMENT
        */
       const state = {
-        sentences: [], // Objects: { text, words, translation }
+        sentences: [], // Sentence models
         currentSentenceIndex: 0,
         currentWordIndex: 0,
-        currentCharIndex: 0,
-        flatChars: [], // Array of all chars in current active view scope
-        mode: "mask", // 'mask', 'first', 'ghost'
+        currentCharIndex: 0, // Index inside flatChars array
+        flatChars: [], // Cached DOM elements & char mapping for current scope
+        mode: "mask", // 'ghost', 'first', 'mask'
+        errMode: "stop", // 'stop' (Học nhanh), 'free' (Gõ tự do)
         view: "sentence", // 'sentence', 'full'
-        typedLog: [], // Tracks typed characters and correctness
+        consecutiveErrors: 0, // Counts consecutive errors on current char for auto-hint
+        speechRate: 0.9,
         startTime: null,
         totalTyped: 0,
         correctTyped: 0,
         hintsUsedCount: 0,
-        weakWords: new Set(), // Words where hints were used or errors made
+        weakWords: new Set(),
         isCompleted: false,
+        savedEssays: [], // LocalStorage saved items
       };
 
       // DOM Element Cache
       const el = {
         display: document.getElementById("essay-display"),
-        hiddenInput: document.getElementById("hidden-input"),
         wrapper: document.getElementById("typing-wrapper"),
+        caret: document.getElementById("smooth-caret"),
+        floatingPill: document.getElementById("floating-word-pill"),
+        pillVnText: document.getElementById("pill-vn-text"),
+        pillEnHint: document.getElementById("pill-en-hint"),
         focusNotice: document.getElementById("focus-notice"),
         progressBar: document.getElementById("essay-progress-bar"),
         statWpm: document.getElementById("stat-wpm"),
@@ -721,7 +986,6 @@
         sentenceProgressPercent: document.getElementById(
           "sentence-progress-percent",
         ),
-        sentenceStepBadge: document.getElementById("sentence-step-badge"),
         currentSentenceVn: document.getElementById("current-sentence-vn"),
         targetWordEn: document.getElementById("target-word-en"),
         targetWordVn: document.getElementById("target-word-vn"),
@@ -730,10 +994,12 @@
           "words-breakdown-container",
         ),
 
-        // Buttons & Controls
-        btnMask: document.getElementById("mode-mask"),
-        btnFirst: document.getElementById("mode-first"),
-        btnGhost: document.getElementById("mode-ghost"),
+        // Buttons
+        btnModeGhost: document.getElementById("mode-ghost"),
+        btnModeFirst: document.getElementById("mode-first"),
+        btnModeMask: document.getElementById("mode-mask"),
+        btnErrStop: document.getElementById("err-mode-stop"),
+        btnErrFree: document.getElementById("err-mode-free"),
         btnViewSentence: document.getElementById("view-sentence"),
         btnViewFull: document.getElementById("view-full"),
         btnWordHint: document.getElementById("btn-word-hint"),
@@ -741,14 +1007,20 @@
         btnSpeakSentence: document.getElementById("btn-speak-sentence"),
         btnSpeakWord: document.getElementById("btn-speak-word"),
         btnSpeakVn: document.getElementById("btn-speak-vn"),
+        btnSpeakRate: document.getElementById("btn-speak-rate"),
+        rateLabel: document.getElementById("rate-label"),
         btnResetSentence: document.getElementById("btn-reset-sentence"),
+        btnPrevSent: document.getElementById("btn-prev-sent"),
+        btnNextSent: document.getElementById("btn-next-sent"),
         btnToggleWordPeek: document.getElementById("btn-toggle-word-peek"),
-        btnCustomEssay: document.getElementById("btn-custom-essay"),
+        btnOpenEssayModal: document.getElementById("btn-open-essay-modal"),
         btnThemeToggle: document.getElementById("btn-theme-toggle"),
 
-        // Modals
+        // Modals & Custom
         modalCustom: document.getElementById("modal-custom"),
         btnCloseModal: document.getElementById("btn-close-modal"),
+        essaySavedList: document.getElementById("essay-saved-list"),
+        inputEssayTitle: document.getElementById("input-essay-title"),
         inputCustomEn: document.getElementById("input-custom-en"),
         inputCustomVn: document.getElementById("input-custom-vn"),
         btnAutoTranslate: document.getElementById("btn-auto-translate"),
@@ -765,28 +1037,71 @@
       };
 
       /**
-       * INITIALIZATION & PARSING
+       * INITIALIZATION
        */
       function initApp() {
         setupEventListeners();
-        loadDefaultEssay();
+        loadSavedEssaysFromStorage();
+
+        // Load default essay if none exists
+        if (state.savedEssays.length === 0) {
+          const defaultObj = {
+            id: "default-1",
+            title: DEFAULT_ESSAY_TITLE,
+            en: DEFAULT_ESSAY_TEXT,
+            vn: DEFAULT_SENTENCES_VN,
+          };
+          state.savedEssays.push(defaultObj);
+          saveEssaysToStorage();
+        }
+
+        loadEssayObject(state.savedEssays[0]);
         updateThemeFromSystem();
+        window.addEventListener("resize", updateCaretAndPillPosition);
       }
 
-      function loadDefaultEssay() {
-        parseEssayText(DEFAULT_ESSAY_TEXT, DEFAULT_SENTENCES_VN);
+      function loadSavedEssaysFromStorage() {
+        try {
+          const stored = localStorage.getItem("essay_practice_list");
+          if (stored) {
+            state.savedEssays = JSON.parse(stored);
+          }
+        } catch (e) {
+          state.savedEssays = [];
+        }
       }
 
-      function parseEssayText(rawEn, vnSentencesArray = []) {
-        // Split raw English essay into sentences
-        const rawSentences = rawEn
+      function saveEssaysToStorage() {
+        try {
+          localStorage.setItem(
+            "essay_practice_list",
+            JSON.stringify(state.savedEssays),
+          );
+        } catch (e) {}
+      }
+
+      function loadEssayObject(essayObj) {
+        parseEssayText(essayObj.en, essayObj.vn);
+        renderSavedEssaysList();
+      }
+
+      /**
+       * ESSAY PARSER & MODEL BUILDER
+       */
+      function parseEssayText(rawEn, vnArray = []) {
+        // Smart quote normalization
+        const normalizedEn = rawEn
+          .replace(/[\u2018\u2019]/g, "'")
+          .replace(/[\u201C\u201D]/g, '"')
           .replace(/\s+/g, " ")
-          .trim()
-          .match(/[^.!?]+[.!?]+/g) || [rawEn];
+          .trim();
+
+        const rawSentences = normalizedEn.match(/[^.!?]+[.!?]+/g) || [
+          normalizedEn,
+        ];
 
         state.sentences = rawSentences.map((sentText, sIdx) => {
           const trimmedSent = sentText.trim();
-          // Extract words and punctuation tokens
           const wordsRaw =
             trimmedSent.match(/[a-zA-Z0-9']+|[^a-zA-Z0-9'\s]+/g) || [];
 
@@ -794,13 +1109,12 @@
             const isWord = /[a-zA-Z0-9']/.test(wStr);
             const cleanLower = wStr.toLowerCase().replace(/[^a-z0-9]/g, "");
             const meaning = isWord
-              ? DEFAULT_WORD_DICT[cleanLower] || lookupWordMeaning(cleanLower)
+              ? CORE_DICTIONARY[cleanLower] || "từ vựng"
               : "";
             return {
               text: wStr,
               isWord: isWord,
               meaning: meaning,
-              typedChars: "",
               isRevealed: false,
             };
           });
@@ -808,18 +1122,19 @@
           return {
             text: trimmedSent,
             words: wordObjects,
-            translation: vnSentencesArray[sIdx] || `Dịch nghĩa câu ${sIdx + 1}`,
+            translation: vnArray[sIdx] || `Bản dịch câu ${sIdx + 1}`,
           };
         });
 
         resetState();
-        renderEngine();
+        buildPreRenderedDOM();
       }
 
       function resetState() {
         state.currentSentenceIndex = 0;
         state.currentWordIndex = 0;
         state.currentCharIndex = 0;
+        state.consecutiveErrors = 0;
         state.startTime = null;
         state.totalTyped = 0;
         state.correctTyped = 0;
@@ -834,9 +1149,10 @@
       }
 
       /**
-       * ENGINE & DISPLAY RENDERER
+       * ULTRA-SMOOTH DOM PRE-RENDERER & CACHE BUILDER
+       * Creates character <span class="char-span"> once. Keystrokes update classList only!
        */
-      function renderEngine() {
+      function buildPreRenderedDOM() {
         if (state.sentences.length === 0) return;
 
         el.totalSentencesNum.innerText = state.sentences.length;
@@ -851,12 +1167,11 @@
         const progressPct = Math.round(
           (state.currentSentenceIndex / state.sentences.length) * 100,
         );
-        el.sentenceProgressPercent.innerText = `${progressPct}% hoàn thành`;
+        el.sentenceProgressPercent.innerText = `${progressPct}%`;
         el.progressBar.style.width = `${progressPct}%`;
 
-        // Build UI text blocks depending on view mode (Sentence by Sentence or Full Essay)
         el.display.innerHTML = "";
-        state.flatChars = []; // Holds references for keyboard index positioning
+        state.flatChars = []; // Cache array for O(1) keystroke updates
 
         const sentencesToRender =
           state.view === "sentence"
@@ -872,33 +1187,33 @@
               }));
 
         sentencesToRender.forEach(({ sentIndex, data }) => {
-          const sentenceSpan = document.createElement("span");
-          sentenceSpan.className = `sentence-block transition-opacity duration-200 ${
+          const sentenceBlock = document.createElement("span");
+          sentenceBlock.className = `sentence-block transition-opacity duration-200 ${
             sentIndex === state.currentSentenceIndex
-              ? "opacity-100 font-medium"
-              : "opacity-40 dark:opacity-30"
+              ? "opacity-100"
+              : "opacity-30"
           }`;
 
           data.words.forEach((wObj, wIdx) => {
-            const wordSpan = document.createElement("span");
+            const wordWrapper = document.createElement("span");
             const isActiveWord =
               sentIndex === state.currentSentenceIndex &&
               wIdx === state.currentWordIndex;
 
-            wordSpan.className = `word-box inline-block mx-[2px] px-[2px] py-[1px] rounded ${isActiveWord ? "active-word bg-indigo-50/80 dark:bg-indigo-950/40 ring-1 ring-indigo-300 dark:ring-indigo-700" : ""}`;
+            wordWrapper.className = `word-wrapper ${isActiveWord ? "active-word" : ""}`;
+            wordWrapper.dataset.sentIdx = sentIndex;
+            wordWrapper.dataset.wordIdx = wIdx;
 
             for (let cIdx = 0; cIdx < wObj.text.length; cIdx++) {
               const targetChar = wObj.text[cIdx];
               const charSpan = document.createElement("span");
-              charSpan.className =
-                "char-item inline-block font-mono font-medium transition-colors duration-100";
+              charSpan.className = "char-span font-mono font-medium";
 
-              // Save reference to global flat char map if inside active sentence
               const isCurrentActiveSentence =
                 sentIndex === state.currentSentenceIndex;
-              let globalCharIdx = -1;
+
               if (isCurrentActiveSentence) {
-                globalCharIdx = state.flatChars.length;
+                const globalCharIdx = state.flatChars.length;
                 state.flatChars.push({
                   char: targetChar,
                   sentIndex,
@@ -907,101 +1222,164 @@
                   domSpan: charSpan,
                   isWord: wObj.isWord,
                   wordText: wObj.text,
+                  isTypedCorrect: false,
                 });
               }
 
-              // Determine display char based on mode and current state
-              const isCurrentChar =
-                isCurrentActiveSentence &&
-                globalCharIdx === state.currentCharIndex;
-
-              if (isCurrentChar) {
-                charSpan.classList.add("char-current");
-              }
-
-              // Check typed history or peek state
-              if (
-                isCurrentActiveSentence &&
-                globalCharIdx < state.currentCharIndex
-              ) {
-                charSpan.innerText = targetChar;
-                charSpan.classList.add("char-correct");
-              } else if (wObj.isRevealed) {
-                charSpan.innerText = targetChar;
-                charSpan.classList.add(
-                  "text-amber-600",
-                  "dark:text-amber-400",
-                  "font-bold",
-                );
-              } else if (!wObj.isWord) {
-                // Punctuation is always shown
-                charSpan.innerText = targetChar;
-                charSpan.classList.add("text-slate-400");
-              } else {
-                // Display according to Visibility Mode
-                if (state.mode === "mask") {
-                  charSpan.innerText = "_";
-                  charSpan.classList.add(
-                    "text-slate-400",
-                    "dark:text-slate-500",
-                    "char-masked",
-                  );
-                } else if (state.mode === "first") {
-                  charSpan.innerText = cIdx === 0 ? targetChar : "_";
-                  charSpan.classList.add(
-                    cIdx === 0
-                      ? "text-slate-700 dark:text-slate-300"
-                      : "text-slate-400 dark:text-slate-500 char-masked",
-                  );
-                } else if (state.mode === "ghost") {
-                  charSpan.innerText = targetChar;
-                  charSpan.classList.add(
-                    "text-slate-300",
-                    "dark:text-slate-600",
-                  );
-                }
-              }
-
-              wordSpan.appendChild(charSpan);
+              wordWrapper.appendChild(charSpan);
             }
 
-            sentenceSpan.appendChild(wordSpan);
+            sentenceBlock.appendChild(wordWrapper);
 
-            // Add spacing between words
+            // Space separator
             const spaceSpan = document.createElement("span");
             spaceSpan.innerHTML = "&nbsp;";
-            sentenceSpan.appendChild(spaceSpan);
+            sentenceBlock.appendChild(spaceSpan);
           });
 
-          el.display.appendChild(sentenceSpan);
+          el.display.appendChild(sentenceBlock);
         });
 
+        // Refresh visuals on all spans
+        updateCharSpansVisuals();
         updateWordRecognitionCard();
         renderSentenceWordsBreakdown();
+
+        // Position caret and floating pill smoothly
+        requestAnimationFrame(updateCaretAndPillPosition);
       }
 
       /**
-       * WORD RECOGNITION & BOTTOM PANEL UPDATES
+       * FAST VISUAL UPDATE FOR ALL CHAR SPANS (O(N) only on sentence load)
+       */
+      function updateCharSpansVisuals() {
+        state.flatChars.forEach((item, idx) => {
+          const { char, domSpan, isWord, wordIndex } = item;
+          const wordObj =
+            state.sentences[state.currentSentenceIndex].words[wordIndex];
+
+          domSpan.className = "char-span font-mono font-medium";
+
+          if (idx < state.currentCharIndex) {
+            domSpan.innerText = char;
+            domSpan.classList.add("char-correct");
+          } else if (wordObj.isRevealed) {
+            domSpan.innerText = char;
+            domSpan.classList.add("char-hinted");
+          } else if (!isWord) {
+            domSpan.innerText = char;
+            domSpan.classList.add("text-slate-400", "dark:text-slate-500");
+          } else {
+            // Apply mode visibility rule
+            if (state.mode === "mask") {
+              domSpan.innerText = "_";
+              domSpan.classList.add(
+                "text-slate-400",
+                "dark:text-slate-500",
+                "char-masked-hint",
+              );
+            } else if (state.mode === "first") {
+              domSpan.innerText = item.charIndex === 0 ? char : "_";
+              domSpan.classList.add(
+                item.charIndex === 0
+                  ? "text-slate-700 dark:text-slate-200"
+                  : "text-slate-400 dark:text-slate-500 char-masked-hint",
+              );
+            } else if (state.mode === "ghost") {
+              domSpan.innerText = char;
+              domSpan.classList.add("text-slate-300", "dark:text-slate-600");
+            }
+          }
+        });
+      }
+
+      /**
+       * SMOOTH MONKEYTYPE CARET & FLOATING PILL POSITIONING
+       */
+      function updateCaretAndPillPosition() {
+        if (state.flatChars.length === 0) return;
+
+        const displayRect = el.display.getBoundingClientRect();
+        let targetSpan = null;
+
+        if (state.currentCharIndex < state.flatChars.length) {
+          targetSpan = state.flatChars[state.currentCharIndex].domSpan;
+        } else {
+          // End of sentence: position after last character
+          targetSpan = state.flatChars[state.flatChars.length - 1].domSpan;
+        }
+
+        if (!targetSpan) return;
+
+        const spanRect = targetSpan.getBoundingClientRect();
+        const wrapperRect = el.wrapper.getBoundingClientRect();
+
+        let caretLeft = 0;
+        let caretTop = 0;
+
+        if (state.currentCharIndex < state.flatChars.length) {
+          caretLeft = spanRect.left - wrapperRect.left;
+          caretTop = spanRect.top - wrapperRect.top;
+        } else {
+          caretLeft = spanRect.right - wrapperRect.left;
+          caretTop = spanRect.top - wrapperRect.top;
+        }
+
+        const caretHeight = spanRect.height || 32;
+
+        // Apply 60FPS CSS Transform Matrix on Smooth Caret
+        el.caret.style.transform = `translate3d(${caretLeft}px, ${caretTop}px, 0)`;
+        el.caret.style.height = `${caretHeight}px`;
+
+        // Position Floating Meaning Pill directly above active word
+        const activeWordWrapper = targetSpan.closest(".word-wrapper");
+        if (activeWordWrapper) {
+          const wordRect = activeWordWrapper.getBoundingClientRect();
+          const pillLeft =
+            wordRect.left + wordRect.width / 2 - wrapperRect.left;
+          const pillTop = wordRect.top - wrapperRect.top - 8;
+
+          el.floatingPill.style.left = `${pillLeft}px`;
+          el.floatingPill.style.top = `${pillTop}px`;
+          el.floatingPill.style.opacity = "1";
+
+          // Highlight active word container
+          document
+            .querySelectorAll(".word-wrapper")
+            .forEach((w) => w.classList.remove("active-word"));
+          activeWordWrapper.classList.add("active-word");
+        }
+      }
+
+      /**
+       * FLOATING PILL & WORD CARD UPDATES
        */
       function updateWordRecognitionCard() {
         const currentSentence = state.sentences[state.currentSentenceIndex];
         if (!currentSentence) return;
 
         const activeWordObj = currentSentence.words[state.currentWordIndex];
-        if (!activeWordObj) {
-          el.targetWordEn.innerText = "•••";
-          el.targetWordVn.innerText = "";
-          el.wordLengthBadge.innerText = "0 chữ cái";
-          return;
-        }
+        if (!activeWordObj) return;
 
         const cleanWord = activeWordObj.text
           .toLowerCase()
           .replace(/[^a-z0-9]/g, "");
-        el.wordLengthBadge.innerText = `${cleanWord.length} chữ cái`;
+        el.wordLengthBadge.innerText = `${cleanWord.length} ký tự`;
 
         if (activeWordObj.isWord) {
-          // If in ghost mode, or word is completed/revealed, show English word directly
+          const meaning =
+            activeWordObj.meaning || CORE_DICTIONARY[cleanWord] || "từ vựng";
+
+          // Update Floating Pill Text
+          el.pillVnText.innerText = meaning;
+          if (activeWordObj.isRevealed || state.consecutiveErrors >= 2) {
+            el.pillEnHint.innerText = activeWordObj.text;
+            el.pillEnHint.classList.remove("hidden");
+          } else {
+            el.pillEnHint.classList.add("hidden");
+          }
+
+          // Update Side Card Text
           if (
             state.mode === "ghost" ||
             activeWordObj.isRevealed ||
@@ -1010,16 +1388,18 @@
             el.targetWordEn.innerText = activeWordObj.text;
           } else if (state.mode === "first") {
             el.targetWordEn.innerText =
-              activeWordObj.text[0] + "•".repeat(cleanWord.length - 1);
+              activeWordObj.text[0] +
+              "•".repeat(Math.max(0, cleanWord.length - 1));
           } else {
             el.targetWordEn.innerText = "•".repeat(cleanWord.length);
           }
 
-          el.targetWordVn.innerText =
-            activeWordObj.meaning || lookupWordMeaning(cleanWord);
+          el.targetWordVn.innerText = meaning;
         } else {
+          el.pillVnText.innerText = "Dấu câu";
+          el.pillEnHint.classList.add("hidden");
           el.targetWordEn.innerText = activeWordObj.text;
-          el.targetWordVn.innerText = "Dấu câu / Ký tự";
+          el.targetWordVn.innerText = "Ký tự đặc biệt";
         }
       }
 
@@ -1039,22 +1419,21 @@
         if (!currentSentence) return;
 
         currentSentence.words.forEach((wObj, idx) => {
-          if (!wObj.isWord) return; // Skip pure punctuation marks in chip view
+          if (!wObj.isWord) return;
 
           const cleanText = wObj.text.replace(/[^a-zA-Z0-9']/g, "");
           const isCompleted = isWordCompleted(state.currentSentenceIndex, idx);
           const isActive = idx === state.currentWordIndex;
 
           const chip = document.createElement("div");
-          chip.className = `px-3 py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer flex flex-col gap-0.5 ${
+          chip.className = `px-3 py-1.5 rounded-xl text-xs font-medium border transition-all cursor-pointer flex flex-col gap-0.5 ${
             isActive
-              ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+              ? "bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-500/30"
               : isCompleted
-                ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800"
+                ? "bg-emerald-50 dark:bg-emerald-950/40 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800"
                 : "bg-slate-50 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-300"
           }`;
 
-          // Header English representation on chip
           const enLabel =
             isCompleted || state.mode === "ghost" || isActive || wObj.isRevealed
               ? cleanText
@@ -1064,14 +1443,14 @@
 
           chip.innerHTML = `
                     <span class="font-bold font-mono ${isActive ? "text-white" : "text-slate-900 dark:text-slate-100"}">${enLabel}</span>
-                    <span class="text-[11px] opacity-90 truncate max-w-[120px]">${wObj.meaning || "nghĩa"}</span>
+                    <span class="text-[10px] opacity-90 truncate max-w-[110px]">${wObj.meaning || "nghĩa"}</span>
                 `;
 
           chip.addEventListener("click", () => {
             speakText(cleanText);
-            // Temporarily reveal word on click
             wObj.isRevealed = true;
-            renderEngine();
+            updateCharSpansVisuals();
+            updateWordRecognitionCard();
           });
 
           el.wordsBreakdownContainer.appendChild(chip);
@@ -1079,72 +1458,149 @@
       }
 
       /**
-       * TYPING ENGINE & INPUT HANDLING
+       * KEYSTROKE ENGINE & ERROR HANDLING (O(1) PERFORMANCE)
        */
-      function handleInputChar(inputChar) {
+      function handleKeyInput(typedKey) {
         if (state.isCompleted || state.flatChars.length === 0) return;
 
         if (!state.startTime) {
           state.startTime = Date.now();
         }
 
-        const curCharObj = state.flatChars[state.currentCharIndex];
-        if (!curCharObj) return;
+        // Remove blinking idle animation when user starts typing
+        el.caret.classList.remove("caret-blinking");
 
-        const expectedChar = curCharObj.char;
+        const curCharItem = state.flatChars[state.currentCharIndex];
+        if (!curCharItem) return;
 
-        // Check punctuation auto-skip if typing space or char matching
-        if (!curCharObj.isWord) {
-          // Auto-advance non-word punctuation
+        // Auto-advance non-word punctuation
+        if (!curCharItem.isWord) {
           advanceCharPosition();
-          renderEngine();
-          // Recursively process if punctuation
-          handleInputChar(inputChar);
+          // Recursively process key
+          handleKeyInput(typedKey);
           return;
         }
 
+        const expectedChar = curCharItem.char;
         state.totalTyped++;
 
-        // Case-insensitive letter matching
-        if (inputChar.toLowerCase() === expectedChar.toLowerCase()) {
+        // Smart Quote & Case Insensitive Matching
+        const isMatch =
+          typedKey.toLowerCase() === expectedChar.toLowerCase() ||
+          (typedKey === "'" && expectedChar === "’") ||
+          (typedKey === '"' && expectedChar === "“");
+
+        if (isMatch) {
           state.correctTyped++;
+          state.consecutiveErrors = 0;
+
+          // O(1) direct DOM update
+          curCharItem.domSpan.innerText = expectedChar;
+          curCharItem.domSpan.className =
+            "char-span font-mono font-medium char-correct";
+
           advanceCharPosition();
-          renderEngine();
         } else {
-          // Wrong character entered
-          flashErrorOnChar(curCharObj.domSpan);
+          // Incorrect Key Typed
+          state.consecutiveErrors++;
           state.weakWords.add(
-            curCharObj.wordText.toLowerCase().replace(/[^a-z0-9]/g, ""),
+            curCharItem.wordText.toLowerCase().replace(/[^a-z0-9]/g, ""),
           );
+
+          if (state.errMode === "stop") {
+            // STOP ON ERROR MODE (Học nhanh - Chặn lỗi sai)
+            curCharItem.domSpan.classList.add("char-wrong", "char-shake");
+            setTimeout(
+              () => curCharItem.domSpan.classList.remove("char-shake"),
+              220,
+            );
+
+            // Auto hint after 2 consecutive wrong presses
+            if (state.consecutiveErrors >= 2) {
+              const wordObj =
+                state.sentences[state.currentSentenceIndex].words[
+                  state.currentWordIndex
+                ];
+              if (wordObj) {
+                wordObj.isRevealed = true;
+                state.hintsUsedCount++;
+                updateCharSpansVisuals();
+              }
+            }
+          } else {
+            // FREE TYPING MODE (Backspace allowed)
+            curCharItem.domSpan.innerText = typedKey;
+            curCharItem.domSpan.className =
+              "char-span font-mono font-medium char-wrong";
+            advanceCharPosition();
+          }
+
           updateMetrics();
         }
+
+        updateWordRecognitionCard();
+        updateCaretAndPillPosition();
+      }
+
+      function handleBackspace() {
+        if (state.errMode !== "free" || state.currentCharIndex <= 0) return;
+
+        state.currentCharIndex--;
+        const prevCharItem = state.flatChars[state.currentCharIndex];
+        if (prevCharItem) {
+          const wordObj =
+            state.sentences[state.currentSentenceIndex].words[
+              prevCharItem.wordIndex
+            ];
+          prevCharItem.domSpan.className = "char-span font-mono font-medium";
+
+          if (state.mode === "mask") {
+            prevCharItem.domSpan.innerText = "_";
+          } else if (state.mode === "first") {
+            prevCharItem.domSpan.innerText =
+              prevCharItem.charIndex === 0 ? prevCharItem.char : "_";
+          } else {
+            prevCharItem.domSpan.innerText = prevCharItem.char;
+          }
+        }
+
+        // Sync currentWordIndex
+        const curCharItem = state.flatChars[state.currentCharIndex];
+        if (curCharItem) {
+          state.currentWordIndex = curCharItem.wordIndex;
+        }
+
+        updateMetrics();
+        updateWordRecognitionCard();
+        updateCaretAndPillPosition();
       }
 
       function advanceCharPosition() {
         state.currentCharIndex++;
         updateMetrics();
 
-        // Check if current word index changed
-        const nextCharObj = state.flatChars[state.currentCharIndex];
-        if (nextCharObj) {
-          state.currentWordIndex = nextCharObj.wordIndex;
+        const nextCharItem = state.flatChars[state.currentCharIndex];
+        if (nextCharItem) {
+          if (state.currentWordIndex !== nextCharItem.wordIndex) {
+            state.currentWordIndex = nextCharItem.wordIndex;
+            renderSentenceWordsBreakdown();
+          }
         } else {
-          // End of sentence reached!
+          // Sentence Complete!
           finishCurrentSentence();
         }
       }
 
       function finishCurrentSentence() {
-        // Speak completed sentence if auto speech enabled
         speakText(state.sentences[state.currentSentenceIndex].text);
 
         if (state.currentSentenceIndex + 1 < state.sentences.length) {
           state.currentSentenceIndex++;
           state.currentWordIndex = 0;
           state.currentCharIndex = 0;
-          renderEngine();
+          state.consecutiveErrors = 0;
+          buildPreRenderedDOM();
         } else {
-          // Whole Essay Complete!
           finishEssay();
         }
       }
@@ -1153,31 +1609,29 @@
         state.isCompleted = true;
         el.progressBar.style.width = "100%";
 
-        // Calculate Final Metrics
         const elapsedMins = (Date.now() - state.startTime) / 60000 || 1;
         const wpm = Math.round(state.correctTyped / 5 / elapsedMins);
         const acc = Math.round(
           (state.correctTyped / (state.totalTyped || 1)) * 100,
         );
 
-        el.finalWpm.innerText = wpm;
-        el.finalAcc.innerText = `${acc}%`;
+        el.finalWpm.innerText = isNaN(wpm) ? 0 : wpm;
+        el.finalAcc.innerText = `${isNaN(acc) ? 100 : acc}%`;
         el.finalHints.innerText = state.hintsUsedCount;
 
-        // Render Weak / Hinted Words Review
+        // Render Weak Words
         el.weakWordsList.innerHTML = "";
         el.weakWordsCount.innerText = `${state.weakWords.size} từ`;
 
         if (state.weakWords.size === 0) {
           el.weakWordsList.innerHTML =
-            '<span class="text-emerald-600 font-medium">Bạn gõ rất hoàn hảo, không có từ nào bị lỗi!</span>';
+            '<span class="text-emerald-600 font-bold">Xuất sắc! Bạn gõ đúng hoàn toàn không mắc lỗi nào!</span>';
         } else {
           state.weakWords.forEach((word) => {
             const tag = document.createElement("span");
             tag.className =
               "px-2.5 py-1 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 rounded-lg font-mono font-medium flex items-center gap-1";
-            const vnMeaning =
-              DEFAULT_WORD_DICT[word] || lookupWordMeaning(word);
+            const vnMeaning = CORE_DICTIONARY[word] || "từ vựng";
             tag.innerHTML = `<span>${word}</span> <span class="text-[10px] opacity-75">(${vnMeaning})</span>`;
             el.weakWordsList.appendChild(tag);
           });
@@ -1186,17 +1640,9 @@
         el.modalCompletion.classList.remove("hidden");
       }
 
-      function flashErrorOnChar(domElement) {
-        if (!domElement) return;
-        domElement.classList.add("char-wrong");
-        setTimeout(() => {
-          domElement.classList.remove("char-wrong");
-        }, 300);
-      }
-
       function updateMetrics() {
         if (!state.startTime) return;
-        const elapsedMins = (Date.now() - state.startTime) / 60000 || 0.01;
+        const elapsedMins = (Date.now() - state.startTime) / 60000 || 0.001;
         const wpm = Math.round(state.correctTyped / 5 / elapsedMins);
         const acc = Math.round(
           (state.correctTyped / (state.totalTyped || 1)) * 100,
@@ -1208,29 +1654,31 @@
       }
 
       /**
-       * SMART HINT SYSTEM & SPEECH SYNTHESIS
+       * SHORTCUTS & HELPERS
        */
       function triggerWordHint() {
-        const curCharObj = state.flatChars[state.currentCharIndex];
-        if (!curCharObj) return;
-
         const currentSentence = state.sentences[state.currentSentenceIndex];
+        if (!currentSentence) return;
         const wordObj = currentSentence.words[state.currentWordIndex];
 
         if (wordObj) {
           wordObj.isRevealed = true;
           state.hintsUsedCount++;
-          state.weakWords.add(
-            curCharObj.wordText.toLowerCase().replace(/[^a-z0-9]/g, ""),
-          );
+          const curCharItem = state.flatChars[state.currentCharIndex];
+          if (curCharItem) {
+            state.weakWords.add(
+              curCharItem.wordText.toLowerCase().replace(/[^a-z0-9]/g, ""),
+            );
+          }
           updateMetrics();
-          renderEngine();
+          updateCharSpansVisuals();
+          updateWordRecognitionCard();
         }
       }
 
       function fillCurrentWord() {
-        const curCharObj = state.flatChars[state.currentCharIndex];
-        if (!curCharObj) return;
+        const curCharItem = state.flatChars[state.currentCharIndex];
+        if (!curCharItem) return;
 
         const currentSentence = state.sentences[state.currentSentenceIndex];
         const wordObj = currentSentence.words[state.currentWordIndex];
@@ -1239,111 +1687,129 @@
           wordObj.isRevealed = true;
           state.hintsUsedCount++;
           state.weakWords.add(
-            curCharObj.wordText.toLowerCase().replace(/[^a-z0-9]/g, ""),
+            curCharItem.wordText.toLowerCase().replace(/[^a-z0-9]/g, ""),
           );
 
-          // Advance currentCharIndex to past this word
           while (
             state.currentCharIndex < state.flatChars.length &&
             state.flatChars[state.currentCharIndex].wordIndex ===
               state.currentWordIndex
           ) {
+            const c = state.flatChars[state.currentCharIndex];
+            c.domSpan.innerText = c.char;
+            c.domSpan.className =
+              "char-span font-mono font-medium char-correct";
             state.correctTyped++;
             state.totalTyped++;
             state.currentCharIndex++;
           }
 
-          const nextCharObj = state.flatChars[state.currentCharIndex];
-          if (nextCharObj) {
-            state.currentWordIndex = nextCharObj.wordIndex;
+          const nextCharItem = state.flatChars[state.currentCharIndex];
+          if (nextCharItem) {
+            state.currentWordIndex = nextCharItem.wordIndex;
           } else {
             finishCurrentSentence();
             return;
           }
 
           updateMetrics();
-          renderEngine();
+          updateWordRecognitionCard();
+          updateCaretAndPillPosition();
         }
       }
 
       function speakText(text, lang = "en-US") {
         if (!("speechSynthesis" in window)) return;
-        window.speechSynthesis.cancel(); // Stop ongoing speech
+        window.speechSynthesis.cancel();
         const utterance = new SpeechSynthesisUtterance(text);
         utterance.lang = lang;
-        utterance.rate = 0.9; // Slightly slower for clarity
+        utterance.rate = state.speechRate;
         window.speechSynthesis.speak(utterance);
       }
 
-      function lookupWordMeaning(cleanWord) {
-        // General translation fallback helper
-        if (DEFAULT_WORD_DICT[cleanWord]) return DEFAULT_WORD_DICT[cleanWord];
-        return "từ vựng";
-      }
-
       /**
-       * EVENT LISTENERS & SHORTCUTS
+       * ZERO-CLICK GLOBAL KEYBOARD EVENT LISTENERS
        */
       function setupEventListeners() {
-        // Keyboard Typing Receiver Focus
-        el.hiddenInput.addEventListener("input", (e) => {
-          const char = e.data;
-          el.hiddenInput.value = "";
-          if (char) {
-            handleInputChar(char);
-          }
-        });
-
-        // Prevent loss of focus
-        document.addEventListener("keydown", (e) => {
-          // Ignore if typing inside custom modal textareas
+        // Global keydown handler (No click needed to type!)
+        window.addEventListener("keydown", (e) => {
+          // If focus is inside text input/textarea/modal, skip engine handling
+          const activeTag = document.activeElement.tagName;
           if (
-            document.activeElement === el.inputCustomEn ||
-            document.activeElement === el.inputCustomVn
+            activeTag === "INPUT" ||
+            activeTag === "TEXTAREA" ||
+            !el.modalCustom.classList.contains("hidden")
           ) {
             return;
           }
 
-          focusHiddenInput();
-
-          // Shortcuts handling
+          // Keyboard Shortcuts
           if (e.key === "Tab") {
             e.preventDefault();
             triggerWordHint();
-          } else if (e.code === "Space" && e.ctrlKey) {
+            return;
+          }
+          if (e.code === "Space" && e.shiftKey) {
             e.preventDefault();
             fillCurrentWord();
-          } else if (e.key === "F2") {
+            return;
+          }
+          if (e.code === "KeyS" && (e.ctrlKey || e.altKey)) {
             e.preventDefault();
             const currentSentence = state.sentences[state.currentSentenceIndex];
             if (currentSentence) speakText(currentSentence.text);
-          } else if (e.key === "Escape") {
+            return;
+          }
+          if (e.key === "Escape") {
             e.preventDefault();
             resetCurrentSentence();
+            return;
+          }
+          if (e.key === "ArrowLeft") {
+            e.preventDefault();
+            changeSentenceOffset(-1);
+            return;
+          }
+          if (e.key === "ArrowRight") {
+            e.preventDefault();
+            changeSentenceOffset(1);
+            return;
+          }
+
+          if (e.key === "Backspace") {
+            e.preventDefault();
+            handleBackspace();
+            return;
+          }
+
+          // Process standard single printable characters
+          if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
+            e.preventDefault();
+            handleKeyInput(e.key);
           }
         });
 
-        el.wrapper.addEventListener("click", focusHiddenInput);
-        el.hiddenInput.addEventListener("blur", () => {
-          el.focusNotice.classList.remove("hidden");
-        });
-        el.hiddenInput.addEventListener("focus", () => {
-          el.focusNotice.classList.add("hidden");
-        });
+        // Mode Switches
+        el.btnModeGhost.addEventListener("click", () => setMode("ghost"));
+        el.btnModeFirst.addEventListener("click", () => setMode("first"));
+        el.btnModeMask.addEventListener("click", () => setMode("mask"));
 
-        // Mode Switching
-        el.btnMask.addEventListener("click", () => setMode("mask"));
-        el.btnFirst.addEventListener("click", () => setMode("first"));
-        el.btnGhost.addEventListener("click", () => setMode("ghost"));
+        // Error Mode Switches
+        el.btnErrStop.addEventListener("click", () => setErrMode("stop"));
+        el.btnErrFree.addEventListener("click", () => setErrMode("free"));
 
-        // View Switching
+        // View Mode Switches
         el.btnViewSentence.addEventListener("click", () => setView("sentence"));
         el.btnViewFull.addEventListener("click", () => setView("full"));
 
-        // Helper Action Buttons
+        // Action Buttons
         el.btnWordHint.addEventListener("click", triggerWordHint);
         el.btnFillWord.addEventListener("click", fillCurrentWord);
         el.btnResetSentence.addEventListener("click", resetCurrentSentence);
+        el.btnPrevSent.addEventListener("click", () =>
+          changeSentenceOffset(-1),
+        );
+        el.btnNextSent.addEventListener("click", () => changeSentenceOffset(1));
 
         el.btnSpeakSentence.addEventListener("click", () => {
           const currentSentence = state.sentences[state.currentSentenceIndex];
@@ -1365,6 +1831,17 @@
           if (currentSentence) speakText(currentSentence.translation, "vi-VN");
         });
 
+        // Speech Rate Toggle
+        el.btnSpeakRate.addEventListener("click", () => {
+          state.speechRate =
+            state.speechRate === 0.9
+              ? 0.7
+              : state.speechRate === 0.7
+                ? 1.0
+                : 0.9;
+          el.rateLabel.innerText = `${state.speechRate}x`;
+        });
+
         el.btnToggleWordPeek.addEventListener("click", () => {
           const currentSentence = state.sentences[state.currentSentenceIndex];
           if (
@@ -1372,12 +1849,13 @@
             currentSentence.words[state.currentWordIndex]
           ) {
             currentSentence.words[state.currentWordIndex].isRevealed = true;
-            renderEngine();
+            updateCharSpansVisuals();
+            updateWordRecognitionCard();
           }
         });
 
-        // Custom Essay Modal Handlers
-        el.btnCustomEssay.addEventListener("click", () =>
+        // Modal & Essay Manager
+        el.btnOpenEssayModal.addEventListener("click", () =>
           el.modalCustom.classList.remove("hidden"),
         );
         el.btnCloseModal.addEventListener("click", () =>
@@ -1385,6 +1863,7 @@
         );
 
         el.btnLoadDefault.addEventListener("click", () => {
+          el.inputEssayTitle.value = DEFAULT_ESSAY_TITLE;
           el.inputCustomEn.value = DEFAULT_ESSAY_TEXT;
           el.inputCustomVn.value = DEFAULT_SENTENCES_VN.join("\n");
         });
@@ -1392,36 +1871,39 @@
         el.btnAutoTranslate.addEventListener("click", handleAutoTranslate);
 
         el.btnSaveCustom.addEventListener("click", () => {
+          const title = el.inputEssayTitle.value.trim() || "Bài Essay Mới";
           const enVal = el.inputCustomEn.value.trim();
           const vnVal = el.inputCustomVn.value.trim();
           if (!enVal) return;
 
           const vnArray = vnVal
-            ? vnVal.split("\n").filter((line) => line.trim().length > 0)
+            ? vnVal.split("\n").filter((l) => l.trim().length > 0)
             : [];
-          parseEssayText(enVal, vnArray);
+
+          const newEssay = {
+            id: "essay-" + Date.now(),
+            title,
+            en: enVal,
+            vn: vnArray,
+          };
+
+          state.savedEssays.push(newEssay);
+          saveEssaysToStorage();
+          loadEssayObject(newEssay);
           el.modalCustom.classList.add("hidden");
         });
 
-        // Completion Modal Reset
         el.btnRestartEssay.addEventListener("click", () => {
           resetState();
-          renderEngine();
-          focusHiddenInput();
+          buildPreRenderedDOM();
         });
 
-        // Theme Toggle
         el.btnThemeToggle.addEventListener("click", toggleTheme);
-      }
-
-      function focusHiddenInput() {
-        el.hiddenInput.focus();
-        el.focusNotice.classList.add("hidden");
       }
 
       function setMode(modeName) {
         state.mode = modeName;
-        [el.btnMask, el.btnFirst, el.btnGhost].forEach((btn) =>
+        [el.btnModeGhost, el.btnModeFirst, el.btnModeMask].forEach((btn) =>
           btn.classList.remove(
             "active",
             "bg-white",
@@ -1433,11 +1915,11 @@
         );
 
         const targetBtn =
-          modeName === "mask"
-            ? el.btnMask
+          modeName === "ghost"
+            ? el.btnModeGhost
             : modeName === "first"
-              ? el.btnFirst
-              : el.btnGhost;
+              ? el.btnModeFirst
+              : el.btnModeMask;
         targetBtn.classList.add(
           "active",
           "bg-white",
@@ -1447,8 +1929,33 @@
           "dark:text-white",
         );
 
-        renderEngine();
-        focusHiddenInput();
+        updateCharSpansVisuals();
+        updateWordRecognitionCard();
+      }
+
+      function setErrMode(errModeName) {
+        state.errMode = errModeName;
+        [el.btnErrStop, el.btnErrFree].forEach((btn) =>
+          btn.classList.remove(
+            "active",
+            "bg-white",
+            "dark:bg-slate-600",
+            "shadow-sm",
+            "text-slate-800",
+            "dark:text-white",
+          ),
+        );
+
+        const targetBtn =
+          errModeName === "stop" ? el.btnErrStop : el.btnErrFree;
+        targetBtn.classList.add(
+          "active",
+          "bg-white",
+          "dark:bg-slate-600",
+          "shadow-sm",
+          "text-slate-800",
+          "dark:text-white",
+        );
       }
 
       function setView(viewName) {
@@ -1475,23 +1982,48 @@
           "dark:text-white",
         );
 
-        renderEngine();
-        focusHiddenInput();
+        buildPreRenderedDOM();
+      }
+
+      function changeSentenceOffset(offset) {
+        const newIndex = state.currentSentenceIndex + offset;
+        if (newIndex >= 0 && newIndex < state.sentences.length) {
+          state.currentSentenceIndex = newIndex;
+          state.currentWordIndex = 0;
+          state.currentCharIndex = 0;
+          state.consecutiveErrors = 0;
+          buildPreRenderedDOM();
+        }
       }
 
       function resetCurrentSentence() {
         state.currentWordIndex = 0;
         state.currentCharIndex = 0;
+        state.consecutiveErrors = 0;
         const currentSentence = state.sentences[state.currentSentenceIndex];
         if (currentSentence) {
           currentSentence.words.forEach((w) => (w.isRevealed = false));
         }
-        renderEngine();
-        focusHiddenInput();
+        buildPreRenderedDOM();
+      }
+
+      function renderSavedEssaysList() {
+        el.essaySavedList.innerHTML = "";
+        state.savedEssays.forEach((essay, idx) => {
+          const btn = document.createElement("button");
+          btn.className =
+            "px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900 text-xs font-bold hover:border-indigo-500 transition flex items-center gap-2";
+          btn.innerHTML = `<i class="fa-solid fa-file-lines text-indigo-500"></i> ${essay.title}`;
+          btn.addEventListener("click", () => {
+            loadEssayObject(essay);
+            el.modalCustom.classList.add("hidden");
+          });
+          el.essaySavedList.appendChild(btn);
+        });
       }
 
       /**
-       * AUTO TRANSLATION FALLBACK (MYMEMORY API)
+       * MYMEMORY TRANSLATION FALLBACK
        */
       async function handleAutoTranslate() {
         const enText = el.inputCustomEn.value.trim();
@@ -1521,12 +2053,9 @@
 
         el.inputCustomVn.value = translatedSentences.join("\n");
         el.btnAutoTranslate.innerHTML =
-          '<i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Tự động dịch sang Tiếng Việt';
+          '<i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Tự động tách câu & Dịch Tiếng Việt';
       }
 
-      /**
-       * THEME MANAGEMENT
-       */
       function updateThemeFromSystem() {
         if (
           window.matchMedia &&
@@ -1540,11 +2069,7 @@
         document.documentElement.classList.toggle("dark");
       }
 
-      // Initialize application on window ready
-      window.addEventListener("DOMContentLoaded", () => {
-        initApp();
-        setTimeout(focusHiddenInput, 300);
-      });
+      window.addEventListener("DOMContentLoaded", initApp);
     </script>
   </body>
 </html>
