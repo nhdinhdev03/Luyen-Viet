@@ -1,0 +1,1667 @@
+<!doctype html>
+<html lang="vi" class="h-full">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Luyện Gõ & Ghi Nhớ Essay Tiếng Anh</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <!-- Google Fonts Inter -->
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            fontFamily: {
+              sans: ["Inter", "sans-serif"],
+              mono: ["JetBrains Mono", "monospace"],
+            },
+            colors: {
+              brand: {
+                50: "#eff6ff",
+                100: "#dbeafe",
+                500: "#3b82f6",
+                600: "#2563eb",
+                700: "#1d4ed8",
+              },
+            },
+          },
+        },
+      };
+    </script>
+
+    <style>
+      /* Custom scrollbar */
+      ::-webkit-scrollbar {
+        width: 8px;
+        height: 8px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 4px;
+      }
+      .dark ::-webkit-scrollbar-thumb {
+        background: #475569;
+      }
+
+      /* Typing animations and effects */
+      .char-correct {
+        color: #10b981 !important; /* green-500 */
+        border-bottom: 2px solid #10b981;
+      }
+      .char-wrong {
+        color: #ef4444 !important; /* red-500 */
+        background-color: #fee2e2;
+        border-bottom: 2px solid #ef4444;
+        animation: shake 0.2s ease-in-out;
+      }
+      .dark .char-wrong {
+        background-color: #7f1d1d;
+      }
+
+      .char-current {
+        position: relative;
+        background-color: #3b82f6;
+        color: #ffffff !important;
+        border-radius: 2px;
+        box-shadow: 0 0 8px rgba(59, 130, 246, 0.6);
+        animation: pulse-cursor 1.2s infinite;
+      }
+
+      .char-masked {
+        font-family: "JetBrains Mono", monospace;
+        font-weight: 600;
+      }
+
+      @keyframes pulse-cursor {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.7;
+        }
+      }
+
+      @keyframes shake {
+        0%,
+        100% {
+          transform: translateX(0);
+        }
+        25% {
+          transform: translateX(-3px);
+        }
+        75% {
+          transform: translateX(3px);
+        }
+      }
+
+      .word-box {
+        transition: all 0.15s ease;
+      }
+      .word-box.active-word {
+        background-color: rgba(59, 130, 246, 0.1);
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-slate-50 dark:bg-slate-900 text-slate-800 dark:text-slate-100 min-h-full flex flex-col font-sans transition-colors duration-200"
+  >
+    <!-- Header Navigation & Metrics -->
+    <header
+      class="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 sticky top-0 z-30 shadow-sm"
+    >
+      <div
+        class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4"
+      >
+        <!-- Logo & Main Title -->
+        <div class="flex items-center gap-3">
+          <div
+            class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-blue-500 flex items-center justify-center text-white shadow-md shadow-indigo-500/20"
+          >
+            <i class="fa-solid font-bold text-lg fa-pen-keyboard"></i>
+          </div>
+          <div>
+            <h1
+              class="text-lg font-bold leading-tight text-slate-900 dark:text-white"
+            >
+              Luyện Viết Essay
+            </h1>
+            <p
+              class="text-xs text-slate-500 dark:text-slate-400 hidden sm:block"
+            >
+              Gõ từ theo mẫu & Ghi nhớ ngữ nghĩa
+            </p>
+          </div>
+        </div>
+
+        <!-- Dashboard Performance Stats -->
+        <div
+          class="flex items-center gap-3 sm:gap-6 text-xs sm:text-sm font-medium"
+        >
+          <div
+            class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-700/50 px-3 py-1.5 rounded-lg"
+          >
+            <i class="fa-solid fa-gauge-high text-blue-500"></i>
+            <span class="text-slate-500 dark:text-slate-400 hidden sm:inline"
+              >Tốc độ:</span
+            >
+            <span
+              id="stat-wpm"
+              class="font-bold text-slate-900 dark:text-white font-mono"
+              >0</span
+            >
+            <span class="text-xs text-slate-500">WPM</span>
+          </div>
+          <div
+            class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-700/50 px-3 py-1.5 rounded-lg"
+          >
+            <i class="fa-solid fa-bullseye text-emerald-500"></i>
+            <span class="text-slate-500 dark:text-slate-400 hidden sm:inline"
+              >Chính xác:</span
+            >
+            <span
+              id="stat-accuracy"
+              class="font-bold text-slate-900 dark:text-white font-mono"
+              >100%</span
+            >
+          </div>
+          <div
+            class="flex items-center gap-1.5 bg-slate-100 dark:bg-slate-700/50 px-3 py-1.5 rounded-lg"
+          >
+            <i class="fa-solid fa-lightbulb text-amber-500"></i>
+            <span class="text-slate-500 dark:text-slate-400 hidden sm:inline"
+              >Gợi ý:</span
+            >
+            <span
+              id="stat-hints"
+              class="font-bold text-slate-900 dark:text-white font-mono"
+              >0</span
+            >
+          </div>
+        </div>
+
+        <!-- Action Controls -->
+        <div class="flex items-center gap-2">
+          <button
+            id="btn-custom-essay"
+            title="Dán bài mẫu mới"
+            class="flex items-center gap-2 px-3 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs sm:text-sm font-medium transition shadow-sm"
+          >
+            <i class="fa-solid fa-paste"></i>
+            <span class="hidden md:inline">Dán mẫu mới</span>
+          </button>
+          <button
+            id="btn-theme-toggle"
+            title="Chuyển đổi Chế độ Sáng/Tối"
+            class="p-2 text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-lg transition"
+          >
+            <i class="fa-solid fa-moon dark:hidden text-lg"></i>
+            <span class="hidden dark:inline text-lg"
+              ><i class="fa-solid fa-sun"></i
+            ></span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="w-full bg-slate-200 dark:bg-slate-700 h-1.5">
+        <div
+          id="essay-progress-bar"
+          class="bg-gradient-to-r from-blue-500 to-indigo-600 h-1.5 w-0 transition-all duration-300"
+        ></div>
+      </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main
+      class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 flex flex-col gap-4 sm:gap-6"
+    >
+      <!-- Controls & Customization Toolbar -->
+      <div
+        class="bg-white dark:bg-slate-800 p-4 rounded-xl border border-slate-200 dark:border-slate-700 shadow-sm flex flex-wrap items-center justify-between gap-4"
+      >
+        <!-- Visibility & Display Modes -->
+        <div class="flex flex-wrap items-center gap-3">
+          <div
+            class="flex items-center gap-1 bg-slate-100 dark:bg-slate-700 p-1 rounded-lg text-xs font-semibold"
+          >
+            <button
+              id="mode-mask"
+              class="mode-btn active px-3 py-1.5 rounded-md bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-sm transition"
+            >
+              <i class="fa-solid fa-eye-slash mr-1"></i> Ẩn từ (_ _ _)
+            </button>
+            <button
+              id="mode-first"
+              class="mode-btn px-3 py-1.5 rounded-md text-slate-600 dark:text-slate-300 hover:text-slate-900 transition"
+            >
+              <i class="fa-solid fa-font mr-1"></i> Gợi ý chữ đầu (s _ _ _)
+            </button>
+            <button
+              id="mode-ghost"
+              class="mode-btn px-3 py-1.5 rounded-md text-slate-600 dark:text-slate-300 hover:text-slate-900 transition"
+            >
+              <i class="fa-solid fa-ghost mr-1"></i> Mẫu mờ (Ghost)
+            </button>
+          </div>
+
+          <div
+            class="h-6 w-px bg-slate-300 dark:bg-slate-700 hidden sm:block"
+          ></div>
+
+          <!-- View Mode: Sentence vs Full Paragraph -->
+          <div
+            class="flex items-center gap-1 bg-slate-100 dark:bg-slate-700 p-1 rounded-lg text-xs font-semibold"
+          >
+            <button
+              id="view-sentence"
+              class="view-btn active px-3 py-1.5 rounded-md bg-white dark:bg-slate-600 text-slate-800 dark:text-white shadow-sm transition"
+            >
+              <i class="fa-solid fa-align-left mr-1"></i> Từng câu
+            </button>
+            <button
+              id="view-full"
+              class="view-btn px-3 py-1.5 rounded-md text-slate-600 dark:text-slate-300 hover:text-slate-900 transition"
+            >
+              <i class="fa-solid fa-paragraph mr-1"></i> Toàn đoạn
+            </button>
+          </div>
+        </div>
+
+        <!-- Quick Action Helpers -->
+        <div class="flex items-center gap-2 text-xs font-medium">
+          <button
+            id="btn-speak-sentence"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 transition text-slate-700 dark:text-slate-300"
+          >
+            <i class="fa-solid fa-volume-high text-indigo-500"></i> Đọc câu (F2)
+          </button>
+          <button
+            id="btn-word-hint"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 transition"
+          >
+            <i class="fa-solid fa-key"></i> Gợi ý từ (Tab)
+          </button>
+          <button
+            id="btn-fill-word"
+            class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30 transition"
+          >
+            <i class="fa-solid fa-wand-magic-sparkles"></i> Điền từ (Ctrl+Space)
+          </button>
+          <button
+            id="btn-reset-sentence"
+            class="p-1.5 rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-700 text-slate-500"
+            title="Làm lại câu hiện tại (Esc)"
+          >
+            <i class="fa-solid fa-rotate-left"></i>
+          </button>
+        </div>
+      </div>
+
+      <!-- Primary Typing Container -->
+      <div
+        id="typing-wrapper"
+        class="relative bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 sm:p-8 shadow-sm flex-1 flex flex-col justify-center min-h-[260px] cursor-text transition-all focus-within:ring-2 focus-within:ring-indigo-500"
+        onclick="focusHiddenInput()"
+      >
+        <!-- Sentence Navigation Indicator (Sentence view) -->
+        <div
+          id="sentence-step-badge"
+          class="mb-4 inline-flex items-center gap-2 self-start px-3 py-1 bg-slate-100 dark:bg-slate-700/60 rounded-full text-xs text-slate-600 dark:text-slate-300 font-semibold"
+        >
+          <span
+            >Câu <span id="current-sentence-num">1</span> /
+            <span id="total-sentences-num">8</span></span
+          >
+          <span class="w-1.5 h-1.5 rounded-full bg-slate-400"></span>
+          <span
+            id="sentence-progress-percent"
+            class="text-indigo-600 dark:text-indigo-400"
+            >0% hoàn thành</span
+          >
+        </div>
+
+        <!-- Visual Interactive Paragraph & Sentence Words Container -->
+        <div
+          id="essay-display"
+          class="font-mono text-lg sm:text-2xl leading-relaxed sm:leading-loose tracking-wide select-none outline-none break-words"
+        >
+          <!-- Dynamically populated letters & words -->
+        </div>
+
+        <!-- Hidden Input Receiver -->
+        <input
+          type="text"
+          id="hidden-input"
+          class="opacity-0 absolute -z-10 top-0 left-0 w-1 h-1"
+          autocomplete="off"
+          autocorrect="off"
+          autocapitalize="off"
+          spellcheck="false"
+        />
+
+        <!-- Focus prompt tooltip when unfocused -->
+        <div
+          id="focus-notice"
+          class="hidden absolute inset-0 bg-slate-900/10 dark:bg-slate-900/30 backdrop-blur-[1px] rounded-2xl flex items-center justify-center"
+        >
+          <span
+            class="bg-indigo-600 text-white px-4 py-2 rounded-xl text-sm font-semibold shadow-lg flex items-center gap-2"
+          >
+            <i class="fa-solid fa-arrow-pointer"></i> Nhấp vào đây để tiếp tục
+            gõ
+          </span>
+        </div>
+      </div>
+
+      <!-- Translation & Vocabulary Recognition Bottom Panel -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6">
+        <!-- Current Sentence Vietnamese Translation Card -->
+        <div
+          class="lg:col-span-2 bg-gradient-to-br from-indigo-900/90 to-slate-900 text-white rounded-xl p-5 shadow-sm border border-indigo-700/50 flex flex-col justify-between gap-4"
+        >
+          <div>
+            <div class="flex items-center justify-between gap-2 mb-2">
+              <div
+                class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-indigo-300"
+              >
+                <i class="fa-solid fa-language text-base text-indigo-400"></i>
+                Dịch nghĩa câu hiện tại (Đang gõ)
+              </div>
+              <span
+                class="text-xs bg-indigo-800/80 text-indigo-200 px-2.5 py-0.5 rounded-full border border-indigo-600/40"
+                >Dịch chuẩn</span
+              >
+            </div>
+            <p
+              id="current-sentence-vn"
+              class="text-base sm:text-lg font-medium text-slate-100 leading-relaxed min-h-[3.5rem]"
+            >
+              <!-- Translated sentence appears here -->
+            </p>
+          </div>
+
+          <div
+            class="flex items-center justify-between text-xs text-indigo-300/80 pt-3 border-t border-indigo-800/60"
+          >
+            <span
+              ><i class="fa-solid fa-keyboard mr-1"></i> Mẹo: Quan sát câu dịch
+              tiếng Việt ở trên để suy luận từ tiếng Anh tương ứng.</span
+            >
+            <button
+              id="btn-speak-vn"
+              class="hover:text-white transition flex items-center gap-1"
+            >
+              <i class="fa-solid fa-volume-low"></i> Đọc dịch
+            </button>
+          </div>
+        </div>
+
+        <!-- Current Word Recognition & Detailed Meaning Card -->
+        <div
+          class="bg-white dark:bg-slate-800 rounded-xl p-5 border border-slate-200 dark:border-slate-700 shadow-sm flex flex-col justify-between"
+        >
+          <div>
+            <div class="flex items-center justify-between mb-3">
+              <span
+                class="text-xs font-bold text-slate-400 uppercase tracking-wider"
+                >Từ hiện tại</span
+              >
+              <span
+                id="word-length-badge"
+                class="text-xs font-mono font-medium bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-2 py-0.5 rounded"
+                >0 chữ cái</span
+              >
+            </div>
+
+            <div class="flex items-baseline justify-between gap-2 mb-1">
+              <h3
+                id="target-word-en"
+                class="text-xl sm:text-2xl font-bold font-mono text-indigo-600 dark:text-indigo-400 tracking-tight"
+              >
+                •••••
+              </h3>
+              <button
+                id="btn-speak-word"
+                title="Phát âm từ này"
+                class="text-slate-400 hover:text-indigo-600 dark:hover:text-indigo-400 transition p-1"
+              >
+                <i class="fa-solid fa-volume-high text-lg"></i>
+              </button>
+            </div>
+
+            <div
+              id="target-word-vn"
+              class="text-slate-700 dark:text-slate-200 text-base font-semibold mt-1"
+            >
+              (Nhấp hoặc gõ để xem nghĩa)
+            </div>
+          </div>
+
+          <div
+            class="mt-4 pt-3 border-t border-slate-100 dark:border-slate-700 flex items-center justify-between text-xs"
+          >
+            <button
+              id="btn-toggle-word-peek"
+              class="text-indigo-600 dark:text-indigo-400 hover:underline font-medium flex items-center gap-1"
+            >
+              <i class="fa-solid fa-eye"></i> Hiện đáp án từ này
+            </button>
+            <span class="text-slate-400"
+              >Phím tắt:
+              <kbd
+                class="px-1.5 py-0.5 bg-slate-100 dark:bg-slate-700 rounded text-slate-600 dark:text-slate-300 border border-slate-300 dark:border-slate-600"
+                >Tab</kbd
+              ></span
+            >
+          </div>
+        </div>
+      </div>
+
+      <!-- Sentence Word-by-Word Breakdown Strip -->
+      <div
+        class="bg-white dark:bg-slate-800 rounded-xl p-4 sm:p-5 border border-slate-200 dark:border-slate-700 shadow-sm"
+      >
+        <h3
+          class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 flex items-center justify-between"
+        >
+          <span
+            ><i class="fa-solid fa-layer-group text-indigo-500 mr-1.5"></i> Chi
+            tiết từ vựng trong câu này</span
+          >
+          <span class="text-slate-500 text-[11px] font-normal"
+            >Rê chuột hoặc nhấp vào từng thẻ để xem từ mẫu</span
+          >
+        </h3>
+
+        <div
+          id="words-breakdown-container"
+          class="flex flex-wrap gap-2 sm:gap-3 max-h-44 overflow-y-auto pr-1"
+        >
+          <!-- Dynamic Word Chips -->
+        </div>
+      </div>
+    </main>
+
+    <!-- Custom Essay Modal -->
+    <div
+      id="modal-custom"
+      class="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden"
+    >
+      <div
+        class="bg-white dark:bg-slate-800 rounded-2xl max-w-2xl w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 flex flex-col gap-4 max-h-[90vh] overflow-y-auto"
+      >
+        <div
+          class="flex items-center justify-between border-b border-slate-100 dark:border-slate-700 pb-3"
+        >
+          <h2
+            class="text-lg font-bold text-slate-900 dark:text-white flex items-center gap-2"
+          >
+            <i class="fa-solid fa-file-pen text-indigo-600"></i> Dán bài mẫu mới
+            để tập gõ
+          </h2>
+          <button
+            id="btn-close-modal"
+            class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 text-xl font-bold p-1"
+          >
+            &times;
+          </button>
+        </div>
+
+        <div class="space-y-4">
+          <div>
+            <label
+              class="block text-xs font-semibold uppercase text-slate-500 mb-1"
+              >Đoạn văn tiếng Anh (Template English)</label
+            >
+            <textarea
+              id="input-custom-en"
+              rows="5"
+              class="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 font-mono text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+              placeholder="Dán đoạn văn tiếng Anh cần ôn tập tại đây..."
+            ></textarea>
+          </div>
+
+          <div>
+            <div class="flex items-center justify-between mb-1">
+              <label
+                class="block text-xs font-semibold uppercase text-slate-500"
+                >Bản dịch tiếng Việt (Không bắt buộc)</label
+              >
+              <button
+                id="btn-auto-translate"
+                class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline font-medium"
+              >
+                <i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Tự động dịch
+                sang Tiếng Việt
+              </button>
+            </div>
+            <textarea
+              id="input-custom-vn"
+              rows="4"
+              class="w-full p-3 rounded-xl border border-slate-300 dark:border-slate-600 bg-slate-50 dark:bg-slate-900 text-slate-900 dark:text-slate-100 text-sm focus:ring-2 focus:ring-indigo-500 outline-none"
+              placeholder="Nhập bản dịch tiếng Việt tương ứng theo từng câu (hoặc nhấn Tự động dịch ở trên)..."
+            ></textarea>
+          </div>
+        </div>
+
+        <div
+          class="flex items-center justify-end gap-3 border-t border-slate-100 dark:border-slate-700 pt-4"
+        >
+          <button
+            id="btn-load-default"
+            class="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-xl transition"
+          >
+            Tải bài mẫu mặc định
+          </button>
+          <button
+            id="btn-save-custom"
+            class="px-5 py-2 text-sm font-semibold text-white bg-indigo-600 hover:bg-indigo-700 rounded-xl shadow-md transition flex items-center gap-2"
+          >
+            <i class="fa-solid fa-check"></i> Bắt đầu ôn tập bài này
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Completion & Weak Words Review Modal -->
+    <div
+      id="modal-completion"
+      class="fixed inset-0 bg-slate-900/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 hidden"
+    >
+      <div
+        class="bg-white dark:bg-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 dark:border-slate-700 text-center flex flex-col items-center"
+      >
+        <div
+          class="w-16 h-16 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-3xl mb-3 shadow-inner"
+        >
+          <i class="fa-solid fa-trophy"></i>
+        </div>
+
+        <h2 class="text-2xl font-bold text-slate-900 dark:text-white mb-1">
+          Hoàn thành xuất sắc!
+        </h2>
+        <p class="text-sm text-slate-500 dark:text-slate-400 mb-6">
+          Bạn đã gõ chính xác toàn bộ bài mẫu essay.
+        </p>
+
+        <!-- Final Stats Grid -->
+        <div class="grid grid-cols-3 gap-3 w-full mb-6">
+          <div
+            class="bg-slate-50 dark:bg-slate-700/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700"
+          >
+            <div class="text-xs text-slate-400">Tốc độ</div>
+            <div
+              id="final-wpm"
+              class="text-xl font-bold text-slate-800 dark:text-white font-mono"
+            >
+              0
+            </div>
+            <div class="text-[10px] text-slate-400">WPM</div>
+          </div>
+          <div
+            class="bg-slate-50 dark:bg-slate-700/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700"
+          >
+            <div class="text-xs text-slate-400">Chính xác</div>
+            <div
+              id="final-acc"
+              class="text-xl font-bold text-emerald-600 font-mono"
+            >
+              100%
+            </div>
+            <div class="text-[10px] text-slate-400">Độ đúng</div>
+          </div>
+          <div
+            class="bg-slate-50 dark:bg-slate-700/50 p-3 rounded-xl border border-slate-200 dark:border-slate-700"
+          >
+            <div class="text-xs text-slate-400">Số gợi ý</div>
+            <div
+              id="final-hints"
+              class="text-xl font-bold text-amber-500 font-mono"
+            >
+              0
+            </div>
+            <div class="text-[10px] text-slate-400">Lần xem</div>
+          </div>
+        </div>
+
+        <!-- Weak / Hinted Words Review Box -->
+        <div
+          class="w-full text-left bg-slate-50 dark:bg-slate-900 p-4 rounded-xl border border-slate-200 dark:border-slate-700 mb-6"
+        >
+          <h4
+            class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-2 flex items-center justify-between"
+          >
+            <span
+              ><i class="fa-solid fa-bookmark text-amber-500 mr-1"></i> Các từ
+              bạn cần lưu ý ôn lại</span
+            >
+            <span id="weak-words-count" class="text-indigo-600 font-bold"
+              >0 từ</span
+            >
+          </h4>
+          <div
+            id="weak-words-list"
+            class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto pr-1 text-xs"
+          >
+            <!-- Populated dynamically -->
+          </div>
+        </div>
+
+        <div class="flex items-center gap-3 w-full">
+          <button
+            id="btn-restart-essay"
+            class="flex-1 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl transition shadow-md"
+          >
+            <i class="fa-solid fa-rotate-right mr-1"></i> Ôn tập lại từ đầu
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Application Core Logic Script -->
+    <script>
+      /**
+       * DEFAULT SAMPLE ESSAY & SENTENCE-BY-SENTENCE DICTIONARY MAPPING
+       */
+      const DEFAULT_ESSAY_TEXT = `My spending habits were often very bad in the past because I bought many products that I did not really need. For example, when I saw big sales on online shopping apps or cool items in video games, I spent money quickly without thinking carefully. Sometimes, I also spent too much money on fast food, coffee, and hanging out with friends on weekends. For me, that was a waste of money, and I often ran out of cash before the end of the month. However, I am trying to change my habits and learn how to spend money and save money wisely. Now, before I buy anything, I always ask myself if it is truly necessary for my studies or daily life. I also write down what I buy every week. This simple habit helps me control my budget and save money for the future.`;
+
+      const DEFAULT_SENTENCES_VN = [
+        "Thói quen tiêu dùng của tôi trong quá khứ thường rất tệ vì tôi đã mua nhiều sản phẩm mà bản thân không thực sự cần.",
+        "Ví dụ, khi thấy các đợt giảm giá lớn trên ứng dụng mua sắm trực tuyến hoặc đồ xịn trong trò chơi điện tử, tôi đã chi tiền rất nhanh mà không suy nghĩ kỹ.",
+        "Đôi khi, tôi cũng tiêu quá nhiều tiền vào thức ăn nhanh, cà phê và đi chơi với bạn bè vào cuối tuần.",
+        "Đối với tôi, đó là sự lãng phí tiền bạc, và tôi thường hết tiền mặt trước khi hết tháng.",
+        "Tuy nhiên, tôi đang nỗ lực thay đổi thói quen của mình và học cách chi tiêu cũng như tiết kiệm tiền một cách khôn ngoan.",
+        "Bây giờ, trước khi mua bất cứ thứ gì, tôi luôn tự hỏi liệu nó có thực sự cần thiết cho việc học hay cuộc sống hàng ngày của tôi hay không.",
+        "Tôi cũng ghi chép lại những gì mình đã mua mỗi tuần.",
+        "Thói quen đơn giản này giúp tôi kiểm soát ngân sách của mình và tiết kiệm tiền cho tương lai.",
+      ];
+
+      // Built-in Word Meaning Dictionary for default essay
+      const DEFAULT_WORD_DICT = {
+        my: "của tôi",
+        spending: "sự tiêu dùng, chi tiêu",
+        habits: "thói quen",
+        were: "thì, là, ở (quá khứ)",
+        often: "thường xuyên",
+        very: "rất",
+        bad: "tệ, xấu",
+        in: "trong",
+        the: "cái, những (từ xác định)",
+        past: "quá khứ",
+        because: "bởi vì",
+        i: "tôi",
+        bought: "đã mua",
+        many: "nhiều",
+        products: "sản phẩm",
+        that: "mà / điều đó",
+        did: "đã (trợ động từ)",
+        not: "không",
+        really: "thực sự",
+        need: "cần",
+        for: "cho, đối với",
+        example: "ví dụ",
+        when: "khi",
+        saw: "đã thấy",
+        big: "lớn",
+        sales: "đợt giảm giá, sự bán hàng",
+        on: "trên",
+        online: "trực tuyến",
+        shopping: "mua sắm",
+        apps: "ứng dụng",
+        or: "hoặc",
+        cool: "xịn, ngầu, hay ho",
+        items: "món đồ, vật phẩm",
+        video: "trò chơi video",
+        games: "trò chơi",
+        spent: "đã chi tiêu",
+        money: "tiền bạc",
+        quickly: "nhanh chóng",
+        without: "mà không",
+        thinking: "suy nghĩ",
+        carefully: "cẩn thận, kỹ lưỡng",
+        sometimes: "đôi khi",
+        also: "cũng",
+        too: "quá",
+        much: "nhiều",
+        fast: "nhanh",
+        food: "thức ăn",
+        coffee: "cà phê",
+        and: "và",
+        hanging: "tụ tập, đi chơi",
+        out: "ngoài",
+        with: "với",
+        friends: "bạn bè",
+        weekends: "cuối tuần",
+        me: "tôi (tân ngữ)",
+        was: "đã là",
+        a: "một",
+        waste: "sự lãng phí",
+        of: "của",
+        ran: "đã chạy / đã hết",
+        cash: "tiền mặt",
+        before: "trước khi",
+        end: "kết thúc, cuối",
+        month: "tháng",
+        however: "tuy nhiên",
+        am: "là / đang",
+        trying: "đang cố gắng",
+        to: "để",
+        change: "thay đổi",
+        learn: "học",
+        how: "cách thức",
+        save: "tiết kiệm",
+        wisely: "khôn ngoan",
+        now: "bây giờ",
+        buy: "mua",
+        anything: "bất cứ thứ gì",
+        always: "luôn luôn",
+        ask: "hỏi",
+        myself: "chính bản thân tôi",
+        if: "liệu / nếu",
+        it: "nó",
+        is: "là / thì",
+        truly: "thực sự",
+        necessary: "cần thiết",
+        studies: "việc học tập",
+        daily: "hàng ngày",
+        life: "cuộc sống",
+        write: "viết",
+        down: "xuống, lại",
+        what: "những gì",
+        every: "mỗi",
+        week: "tuần",
+        this: "điều này, thói quen này",
+        simple: "đơn giản",
+        habit: "thói quen",
+        helps: "giúp đỡ",
+        control: "kiểm soát",
+        budget: "ngân sách",
+        future: "tương lai",
+        "spending habits": "thói quen chi tiêu",
+        "shopping apps": "ứng dụng mua sắm",
+        "fast food": "thức ăn nhanh",
+        "hanging out": "tụ tập đi chơi",
+        "waste of money": "lãng phí tiền bạc",
+        "ran out of": "cạn kiệt / hết tiền",
+        "daily life": "cuộc sống hàng ngày",
+        "write down": "ghi chép lại",
+      };
+
+      /**
+       * STATE MANAGEMENT
+       */
+      const state = {
+        sentences: [], // Objects: { text, words, translation }
+        currentSentenceIndex: 0,
+        currentWordIndex: 0,
+        currentCharIndex: 0,
+        flatChars: [], // Array of all chars in current active view scope
+        mode: "mask", // 'mask', 'first', 'ghost'
+        view: "sentence", // 'sentence', 'full'
+        typedLog: [], // Tracks typed characters and correctness
+        startTime: null,
+        totalTyped: 0,
+        correctTyped: 0,
+        hintsUsedCount: 0,
+        weakWords: new Set(), // Words where hints were used or errors made
+        isCompleted: false,
+      };
+
+      // DOM Element Cache
+      const el = {
+        display: document.getElementById("essay-display"),
+        hiddenInput: document.getElementById("hidden-input"),
+        wrapper: document.getElementById("typing-wrapper"),
+        focusNotice: document.getElementById("focus-notice"),
+        progressBar: document.getElementById("essay-progress-bar"),
+        statWpm: document.getElementById("stat-wpm"),
+        statAcc: document.getElementById("stat-accuracy"),
+        statHints: document.getElementById("stat-hints"),
+        currentSentenceNum: document.getElementById("current-sentence-num"),
+        totalSentencesNum: document.getElementById("total-sentences-num"),
+        sentenceProgressPercent: document.getElementById(
+          "sentence-progress-percent",
+        ),
+        sentenceStepBadge: document.getElementById("sentence-step-badge"),
+        currentSentenceVn: document.getElementById("current-sentence-vn"),
+        targetWordEn: document.getElementById("target-word-en"),
+        targetWordVn: document.getElementById("target-word-vn"),
+        wordLengthBadge: document.getElementById("word-length-badge"),
+        wordsBreakdownContainer: document.getElementById(
+          "words-breakdown-container",
+        ),
+
+        // Buttons & Controls
+        btnMask: document.getElementById("mode-mask"),
+        btnFirst: document.getElementById("mode-first"),
+        btnGhost: document.getElementById("mode-ghost"),
+        btnViewSentence: document.getElementById("view-sentence"),
+        btnViewFull: document.getElementById("view-full"),
+        btnWordHint: document.getElementById("btn-word-hint"),
+        btnFillWord: document.getElementById("btn-fill-word"),
+        btnSpeakSentence: document.getElementById("btn-speak-sentence"),
+        btnSpeakWord: document.getElementById("btn-speak-word"),
+        btnSpeakVn: document.getElementById("btn-speak-vn"),
+        btnResetSentence: document.getElementById("btn-reset-sentence"),
+        btnToggleWordPeek: document.getElementById("btn-toggle-word-peek"),
+        btnCustomEssay: document.getElementById("btn-custom-essay"),
+        btnThemeToggle: document.getElementById("btn-theme-toggle"),
+
+        // Modals
+        modalCustom: document.getElementById("modal-custom"),
+        btnCloseModal: document.getElementById("btn-close-modal"),
+        inputCustomEn: document.getElementById("input-custom-en"),
+        inputCustomVn: document.getElementById("input-custom-vn"),
+        btnAutoTranslate: document.getElementById("btn-auto-translate"),
+        btnLoadDefault: document.getElementById("btn-load-default"),
+        btnSaveCustom: document.getElementById("btn-save-custom"),
+
+        modalCompletion: document.getElementById("modal-completion"),
+        finalWpm: document.getElementById("final-wpm"),
+        finalAcc: document.getElementById("final-acc"),
+        finalHints: document.getElementById("final-hints"),
+        weakWordsCount: document.getElementById("weak-words-count"),
+        weakWordsList: document.getElementById("weak-words-list"),
+        btnRestartEssay: document.getElementById("btn-restart-essay"),
+      };
+
+      /**
+       * INITIALIZATION & PARSING
+       */
+      function initApp() {
+        setupEventListeners();
+        loadDefaultEssay();
+        updateThemeFromSystem();
+      }
+
+      function loadDefaultEssay() {
+        parseEssayText(DEFAULT_ESSAY_TEXT, DEFAULT_SENTENCES_VN);
+      }
+
+      function parseEssayText(rawEn, vnSentencesArray = []) {
+        // Split raw English essay into sentences
+        const rawSentences = rawEn
+          .replace(/\s+/g, " ")
+          .trim()
+          .match(/[^.!?]+[.!?]+/g) || [rawEn];
+
+        state.sentences = rawSentences.map((sentText, sIdx) => {
+          const trimmedSent = sentText.trim();
+          // Extract words and punctuation tokens
+          const wordsRaw =
+            trimmedSent.match(/[a-zA-Z0-9']+|[^a-zA-Z0-9'\s]+/g) || [];
+
+          const wordObjects = wordsRaw.map((wStr) => {
+            const isWord = /[a-zA-Z0-9']/.test(wStr);
+            const cleanLower = wStr.toLowerCase().replace(/[^a-z0-9]/g, "");
+            const meaning = isWord
+              ? DEFAULT_WORD_DICT[cleanLower] || lookupWordMeaning(cleanLower)
+              : "";
+            return {
+              text: wStr,
+              isWord: isWord,
+              meaning: meaning,
+              typedChars: "",
+              isRevealed: false,
+            };
+          });
+
+          return {
+            text: trimmedSent,
+            words: wordObjects,
+            translation: vnSentencesArray[sIdx] || `Dịch nghĩa câu ${sIdx + 1}`,
+          };
+        });
+
+        resetState();
+        renderEngine();
+      }
+
+      function resetState() {
+        state.currentSentenceIndex = 0;
+        state.currentWordIndex = 0;
+        state.currentCharIndex = 0;
+        state.startTime = null;
+        state.totalTyped = 0;
+        state.correctTyped = 0;
+        state.hintsUsedCount = 0;
+        state.weakWords.clear();
+        state.isCompleted = false;
+
+        el.statWpm.innerText = "0";
+        el.statAcc.innerText = "100%";
+        el.statHints.innerText = "0";
+        el.modalCompletion.classList.add("hidden");
+      }
+
+      /**
+       * ENGINE & DISPLAY RENDERER
+       */
+      function renderEngine() {
+        if (state.sentences.length === 0) return;
+
+        el.totalSentencesNum.innerText = state.sentences.length;
+        el.currentSentenceNum.innerText = state.currentSentenceIndex + 1;
+
+        const currentSentence = state.sentences[state.currentSentenceIndex];
+        el.currentSentenceVn.innerText = currentSentence
+          ? currentSentence.translation
+          : "";
+
+        // Update Progress Percentage
+        const progressPct = Math.round(
+          (state.currentSentenceIndex / state.sentences.length) * 100,
+        );
+        el.sentenceProgressPercent.innerText = `${progressPct}% hoàn thành`;
+        el.progressBar.style.width = `${progressPct}%`;
+
+        // Build UI text blocks depending on view mode (Sentence by Sentence or Full Essay)
+        el.display.innerHTML = "";
+        state.flatChars = []; // Holds references for keyboard index positioning
+
+        const sentencesToRender =
+          state.view === "sentence"
+            ? [
+                {
+                  sentIndex: state.currentSentenceIndex,
+                  data: state.sentences[state.currentSentenceIndex],
+                },
+              ]
+            : state.sentences.map((data, sIdx) => ({
+                sentIndex: sIdx,
+                data: data,
+              }));
+
+        sentencesToRender.forEach(({ sentIndex, data }) => {
+          const sentenceSpan = document.createElement("span");
+          sentenceSpan.className = `sentence-block transition-opacity duration-200 ${
+            sentIndex === state.currentSentenceIndex
+              ? "opacity-100 font-medium"
+              : "opacity-40 dark:opacity-30"
+          }`;
+
+          data.words.forEach((wObj, wIdx) => {
+            const wordSpan = document.createElement("span");
+            const isActiveWord =
+              sentIndex === state.currentSentenceIndex &&
+              wIdx === state.currentWordIndex;
+
+            wordSpan.className = `word-box inline-block mx-[2px] px-[2px] py-[1px] rounded ${isActiveWord ? "active-word bg-indigo-50/80 dark:bg-indigo-950/40 ring-1 ring-indigo-300 dark:ring-indigo-700" : ""}`;
+
+            for (let cIdx = 0; cIdx < wObj.text.length; cIdx++) {
+              const targetChar = wObj.text[cIdx];
+              const charSpan = document.createElement("span");
+              charSpan.className =
+                "char-item inline-block font-mono font-medium transition-colors duration-100";
+
+              // Save reference to global flat char map if inside active sentence
+              const isCurrentActiveSentence =
+                sentIndex === state.currentSentenceIndex;
+              let globalCharIdx = -1;
+              if (isCurrentActiveSentence) {
+                globalCharIdx = state.flatChars.length;
+                state.flatChars.push({
+                  char: targetChar,
+                  sentIndex,
+                  wordIndex: wIdx,
+                  charIndex: cIdx,
+                  domSpan: charSpan,
+                  isWord: wObj.isWord,
+                  wordText: wObj.text,
+                });
+              }
+
+              // Determine display char based on mode and current state
+              const isCurrentChar =
+                isCurrentActiveSentence &&
+                globalCharIdx === state.currentCharIndex;
+
+              if (isCurrentChar) {
+                charSpan.classList.add("char-current");
+              }
+
+              // Check typed history or peek state
+              if (
+                isCurrentActiveSentence &&
+                globalCharIdx < state.currentCharIndex
+              ) {
+                charSpan.innerText = targetChar;
+                charSpan.classList.add("char-correct");
+              } else if (wObj.isRevealed) {
+                charSpan.innerText = targetChar;
+                charSpan.classList.add(
+                  "text-amber-600",
+                  "dark:text-amber-400",
+                  "font-bold",
+                );
+              } else if (!wObj.isWord) {
+                // Punctuation is always shown
+                charSpan.innerText = targetChar;
+                charSpan.classList.add("text-slate-400");
+              } else {
+                // Display according to Visibility Mode
+                if (state.mode === "mask") {
+                  charSpan.innerText = "_";
+                  charSpan.classList.add(
+                    "text-slate-400",
+                    "dark:text-slate-500",
+                    "char-masked",
+                  );
+                } else if (state.mode === "first") {
+                  charSpan.innerText = cIdx === 0 ? targetChar : "_";
+                  charSpan.classList.add(
+                    cIdx === 0
+                      ? "text-slate-700 dark:text-slate-300"
+                      : "text-slate-400 dark:text-slate-500 char-masked",
+                  );
+                } else if (state.mode === "ghost") {
+                  charSpan.innerText = targetChar;
+                  charSpan.classList.add(
+                    "text-slate-300",
+                    "dark:text-slate-600",
+                  );
+                }
+              }
+
+              wordSpan.appendChild(charSpan);
+            }
+
+            sentenceSpan.appendChild(wordSpan);
+
+            // Add spacing between words
+            const spaceSpan = document.createElement("span");
+            spaceSpan.innerHTML = "&nbsp;";
+            sentenceSpan.appendChild(spaceSpan);
+          });
+
+          el.display.appendChild(sentenceSpan);
+        });
+
+        updateWordRecognitionCard();
+        renderSentenceWordsBreakdown();
+      }
+
+      /**
+       * WORD RECOGNITION & BOTTOM PANEL UPDATES
+       */
+      function updateWordRecognitionCard() {
+        const currentSentence = state.sentences[state.currentSentenceIndex];
+        if (!currentSentence) return;
+
+        const activeWordObj = currentSentence.words[state.currentWordIndex];
+        if (!activeWordObj) {
+          el.targetWordEn.innerText = "•••";
+          el.targetWordVn.innerText = "";
+          el.wordLengthBadge.innerText = "0 chữ cái";
+          return;
+        }
+
+        const cleanWord = activeWordObj.text
+          .toLowerCase()
+          .replace(/[^a-z0-9]/g, "");
+        el.wordLengthBadge.innerText = `${cleanWord.length} chữ cái`;
+
+        if (activeWordObj.isWord) {
+          // If in ghost mode, or word is completed/revealed, show English word directly
+          if (
+            state.mode === "ghost" ||
+            activeWordObj.isRevealed ||
+            isWordCompleted(state.currentSentenceIndex, state.currentWordIndex)
+          ) {
+            el.targetWordEn.innerText = activeWordObj.text;
+          } else if (state.mode === "first") {
+            el.targetWordEn.innerText =
+              activeWordObj.text[0] + "•".repeat(cleanWord.length - 1);
+          } else {
+            el.targetWordEn.innerText = "•".repeat(cleanWord.length);
+          }
+
+          el.targetWordVn.innerText =
+            activeWordObj.meaning || lookupWordMeaning(cleanWord);
+        } else {
+          el.targetWordEn.innerText = activeWordObj.text;
+          el.targetWordVn.innerText = "Dấu câu / Ký tự";
+        }
+      }
+
+      function isWordCompleted(sIdx, wIdx) {
+        const wordChars = state.flatChars.filter(
+          (c) => c.sentIndex === sIdx && c.wordIndex === wIdx,
+        );
+        if (wordChars.length === 0) return false;
+        return wordChars.every(
+          (c) => state.flatChars.indexOf(c) < state.currentCharIndex,
+        );
+      }
+
+      function renderSentenceWordsBreakdown() {
+        el.wordsBreakdownContainer.innerHTML = "";
+        const currentSentence = state.sentences[state.currentSentenceIndex];
+        if (!currentSentence) return;
+
+        currentSentence.words.forEach((wObj, idx) => {
+          if (!wObj.isWord) return; // Skip pure punctuation marks in chip view
+
+          const cleanText = wObj.text.replace(/[^a-zA-Z0-9']/g, "");
+          const isCompleted = isWordCompleted(state.currentSentenceIndex, idx);
+          const isActive = idx === state.currentWordIndex;
+
+          const chip = document.createElement("div");
+          chip.className = `px-3 py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer flex flex-col gap-0.5 ${
+            isActive
+              ? "bg-indigo-600 text-white border-indigo-600 shadow-sm"
+              : isCompleted
+                ? "bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800"
+                : "bg-slate-50 dark:bg-slate-700/50 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-indigo-300"
+          }`;
+
+          // Header English representation on chip
+          const enLabel =
+            isCompleted || state.mode === "ghost" || isActive || wObj.isRevealed
+              ? cleanText
+              : state.mode === "first"
+                ? cleanText[0] + "..."
+                : "•••";
+
+          chip.innerHTML = `
+                    <span class="font-bold font-mono ${isActive ? "text-white" : "text-slate-900 dark:text-slate-100"}">${enLabel}</span>
+                    <span class="text-[11px] opacity-90 truncate max-w-[120px]">${wObj.meaning || "nghĩa"}</span>
+                `;
+
+          chip.addEventListener("click", () => {
+            speakText(cleanText);
+            // Temporarily reveal word on click
+            wObj.isRevealed = true;
+            renderEngine();
+          });
+
+          el.wordsBreakdownContainer.appendChild(chip);
+        });
+      }
+
+      /**
+       * TYPING ENGINE & INPUT HANDLING
+       */
+      function handleInputChar(inputChar) {
+        if (state.isCompleted || state.flatChars.length === 0) return;
+
+        if (!state.startTime) {
+          state.startTime = Date.now();
+        }
+
+        const curCharObj = state.flatChars[state.currentCharIndex];
+        if (!curCharObj) return;
+
+        const expectedChar = curCharObj.char;
+
+        // Check punctuation auto-skip if typing space or char matching
+        if (!curCharObj.isWord) {
+          // Auto-advance non-word punctuation
+          advanceCharPosition();
+          renderEngine();
+          // Recursively process if punctuation
+          handleInputChar(inputChar);
+          return;
+        }
+
+        state.totalTyped++;
+
+        // Case-insensitive letter matching
+        if (inputChar.toLowerCase() === expectedChar.toLowerCase()) {
+          state.correctTyped++;
+          advanceCharPosition();
+          renderEngine();
+        } else {
+          // Wrong character entered
+          flashErrorOnChar(curCharObj.domSpan);
+          state.weakWords.add(
+            curCharObj.wordText.toLowerCase().replace(/[^a-z0-9]/g, ""),
+          );
+          updateMetrics();
+        }
+      }
+
+      function advanceCharPosition() {
+        state.currentCharIndex++;
+        updateMetrics();
+
+        // Check if current word index changed
+        const nextCharObj = state.flatChars[state.currentCharIndex];
+        if (nextCharObj) {
+          state.currentWordIndex = nextCharObj.wordIndex;
+        } else {
+          // End of sentence reached!
+          finishCurrentSentence();
+        }
+      }
+
+      function finishCurrentSentence() {
+        // Speak completed sentence if auto speech enabled
+        speakText(state.sentences[state.currentSentenceIndex].text);
+
+        if (state.currentSentenceIndex + 1 < state.sentences.length) {
+          state.currentSentenceIndex++;
+          state.currentWordIndex = 0;
+          state.currentCharIndex = 0;
+          renderEngine();
+        } else {
+          // Whole Essay Complete!
+          finishEssay();
+        }
+      }
+
+      function finishEssay() {
+        state.isCompleted = true;
+        el.progressBar.style.width = "100%";
+
+        // Calculate Final Metrics
+        const elapsedMins = (Date.now() - state.startTime) / 60000 || 1;
+        const wpm = Math.round(state.correctTyped / 5 / elapsedMins);
+        const acc = Math.round(
+          (state.correctTyped / (state.totalTyped || 1)) * 100,
+        );
+
+        el.finalWpm.innerText = wpm;
+        el.finalAcc.innerText = `${acc}%`;
+        el.finalHints.innerText = state.hintsUsedCount;
+
+        // Render Weak / Hinted Words Review
+        el.weakWordsList.innerHTML = "";
+        el.weakWordsCount.innerText = `${state.weakWords.size} từ`;
+
+        if (state.weakWords.size === 0) {
+          el.weakWordsList.innerHTML =
+            '<span class="text-emerald-600 font-medium">Bạn gõ rất hoàn hảo, không có từ nào bị lỗi!</span>';
+        } else {
+          state.weakWords.forEach((word) => {
+            const tag = document.createElement("span");
+            tag.className =
+              "px-2.5 py-1 bg-amber-100 dark:bg-amber-900/40 text-amber-800 dark:text-amber-300 rounded-lg font-mono font-medium flex items-center gap-1";
+            const vnMeaning =
+              DEFAULT_WORD_DICT[word] || lookupWordMeaning(word);
+            tag.innerHTML = `<span>${word}</span> <span class="text-[10px] opacity-75">(${vnMeaning})</span>`;
+            el.weakWordsList.appendChild(tag);
+          });
+        }
+
+        el.modalCompletion.classList.remove("hidden");
+      }
+
+      function flashErrorOnChar(domElement) {
+        if (!domElement) return;
+        domElement.classList.add("char-wrong");
+        setTimeout(() => {
+          domElement.classList.remove("char-wrong");
+        }, 300);
+      }
+
+      function updateMetrics() {
+        if (!state.startTime) return;
+        const elapsedMins = (Date.now() - state.startTime) / 60000 || 0.01;
+        const wpm = Math.round(state.correctTyped / 5 / elapsedMins);
+        const acc = Math.round(
+          (state.correctTyped / (state.totalTyped || 1)) * 100,
+        );
+
+        el.statWpm.innerText = isNaN(wpm) ? 0 : wpm;
+        el.statAcc.innerText = `${isNaN(acc) ? 100 : acc}%`;
+        el.statHints.innerText = state.hintsUsedCount;
+      }
+
+      /**
+       * SMART HINT SYSTEM & SPEECH SYNTHESIS
+       */
+      function triggerWordHint() {
+        const curCharObj = state.flatChars[state.currentCharIndex];
+        if (!curCharObj) return;
+
+        const currentSentence = state.sentences[state.currentSentenceIndex];
+        const wordObj = currentSentence.words[state.currentWordIndex];
+
+        if (wordObj) {
+          wordObj.isRevealed = true;
+          state.hintsUsedCount++;
+          state.weakWords.add(
+            curCharObj.wordText.toLowerCase().replace(/[^a-z0-9]/g, ""),
+          );
+          updateMetrics();
+          renderEngine();
+        }
+      }
+
+      function fillCurrentWord() {
+        const curCharObj = state.flatChars[state.currentCharIndex];
+        if (!curCharObj) return;
+
+        const currentSentence = state.sentences[state.currentSentenceIndex];
+        const wordObj = currentSentence.words[state.currentWordIndex];
+
+        if (wordObj) {
+          wordObj.isRevealed = true;
+          state.hintsUsedCount++;
+          state.weakWords.add(
+            curCharObj.wordText.toLowerCase().replace(/[^a-z0-9]/g, ""),
+          );
+
+          // Advance currentCharIndex to past this word
+          while (
+            state.currentCharIndex < state.flatChars.length &&
+            state.flatChars[state.currentCharIndex].wordIndex ===
+              state.currentWordIndex
+          ) {
+            state.correctTyped++;
+            state.totalTyped++;
+            state.currentCharIndex++;
+          }
+
+          const nextCharObj = state.flatChars[state.currentCharIndex];
+          if (nextCharObj) {
+            state.currentWordIndex = nextCharObj.wordIndex;
+          } else {
+            finishCurrentSentence();
+            return;
+          }
+
+          updateMetrics();
+          renderEngine();
+        }
+      }
+
+      function speakText(text, lang = "en-US") {
+        if (!("speechSynthesis" in window)) return;
+        window.speechSynthesis.cancel(); // Stop ongoing speech
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.lang = lang;
+        utterance.rate = 0.9; // Slightly slower for clarity
+        window.speechSynthesis.speak(utterance);
+      }
+
+      function lookupWordMeaning(cleanWord) {
+        // General translation fallback helper
+        if (DEFAULT_WORD_DICT[cleanWord]) return DEFAULT_WORD_DICT[cleanWord];
+        return "từ vựng";
+      }
+
+      /**
+       * EVENT LISTENERS & SHORTCUTS
+       */
+      function setupEventListeners() {
+        // Keyboard Typing Receiver Focus
+        el.hiddenInput.addEventListener("input", (e) => {
+          const char = e.data;
+          el.hiddenInput.value = "";
+          if (char) {
+            handleInputChar(char);
+          }
+        });
+
+        // Prevent loss of focus
+        document.addEventListener("keydown", (e) => {
+          // Ignore if typing inside custom modal textareas
+          if (
+            document.activeElement === el.inputCustomEn ||
+            document.activeElement === el.inputCustomVn
+          ) {
+            return;
+          }
+
+          focusHiddenInput();
+
+          // Shortcuts handling
+          if (e.key === "Tab") {
+            e.preventDefault();
+            triggerWordHint();
+          } else if (e.code === "Space" && e.ctrlKey) {
+            e.preventDefault();
+            fillCurrentWord();
+          } else if (e.key === "F2") {
+            e.preventDefault();
+            const currentSentence = state.sentences[state.currentSentenceIndex];
+            if (currentSentence) speakText(currentSentence.text);
+          } else if (e.key === "Escape") {
+            e.preventDefault();
+            resetCurrentSentence();
+          }
+        });
+
+        el.wrapper.addEventListener("click", focusHiddenInput);
+        el.hiddenInput.addEventListener("blur", () => {
+          el.focusNotice.classList.remove("hidden");
+        });
+        el.hiddenInput.addEventListener("focus", () => {
+          el.focusNotice.classList.add("hidden");
+        });
+
+        // Mode Switching
+        el.btnMask.addEventListener("click", () => setMode("mask"));
+        el.btnFirst.addEventListener("click", () => setMode("first"));
+        el.btnGhost.addEventListener("click", () => setMode("ghost"));
+
+        // View Switching
+        el.btnViewSentence.addEventListener("click", () => setView("sentence"));
+        el.btnViewFull.addEventListener("click", () => setView("full"));
+
+        // Helper Action Buttons
+        el.btnWordHint.addEventListener("click", triggerWordHint);
+        el.btnFillWord.addEventListener("click", fillCurrentWord);
+        el.btnResetSentence.addEventListener("click", resetCurrentSentence);
+
+        el.btnSpeakSentence.addEventListener("click", () => {
+          const currentSentence = state.sentences[state.currentSentenceIndex];
+          if (currentSentence) speakText(currentSentence.text);
+        });
+
+        el.btnSpeakWord.addEventListener("click", () => {
+          const currentSentence = state.sentences[state.currentSentenceIndex];
+          if (
+            currentSentence &&
+            currentSentence.words[state.currentWordIndex]
+          ) {
+            speakText(currentSentence.words[state.currentWordIndex].text);
+          }
+        });
+
+        el.btnSpeakVn.addEventListener("click", () => {
+          const currentSentence = state.sentences[state.currentSentenceIndex];
+          if (currentSentence) speakText(currentSentence.translation, "vi-VN");
+        });
+
+        el.btnToggleWordPeek.addEventListener("click", () => {
+          const currentSentence = state.sentences[state.currentSentenceIndex];
+          if (
+            currentSentence &&
+            currentSentence.words[state.currentWordIndex]
+          ) {
+            currentSentence.words[state.currentWordIndex].isRevealed = true;
+            renderEngine();
+          }
+        });
+
+        // Custom Essay Modal Handlers
+        el.btnCustomEssay.addEventListener("click", () =>
+          el.modalCustom.classList.remove("hidden"),
+        );
+        el.btnCloseModal.addEventListener("click", () =>
+          el.modalCustom.classList.add("hidden"),
+        );
+
+        el.btnLoadDefault.addEventListener("click", () => {
+          el.inputCustomEn.value = DEFAULT_ESSAY_TEXT;
+          el.inputCustomVn.value = DEFAULT_SENTENCES_VN.join("\n");
+        });
+
+        el.btnAutoTranslate.addEventListener("click", handleAutoTranslate);
+
+        el.btnSaveCustom.addEventListener("click", () => {
+          const enVal = el.inputCustomEn.value.trim();
+          const vnVal = el.inputCustomVn.value.trim();
+          if (!enVal) return;
+
+          const vnArray = vnVal
+            ? vnVal.split("\n").filter((line) => line.trim().length > 0)
+            : [];
+          parseEssayText(enVal, vnArray);
+          el.modalCustom.classList.add("hidden");
+        });
+
+        // Completion Modal Reset
+        el.btnRestartEssay.addEventListener("click", () => {
+          resetState();
+          renderEngine();
+          focusHiddenInput();
+        });
+
+        // Theme Toggle
+        el.btnThemeToggle.addEventListener("click", toggleTheme);
+      }
+
+      function focusHiddenInput() {
+        el.hiddenInput.focus();
+        el.focusNotice.classList.add("hidden");
+      }
+
+      function setMode(modeName) {
+        state.mode = modeName;
+        [el.btnMask, el.btnFirst, el.btnGhost].forEach((btn) =>
+          btn.classList.remove(
+            "active",
+            "bg-white",
+            "dark:bg-slate-600",
+            "shadow-sm",
+            "text-slate-800",
+            "dark:text-white",
+          ),
+        );
+
+        const targetBtn =
+          modeName === "mask"
+            ? el.btnMask
+            : modeName === "first"
+              ? el.btnFirst
+              : el.btnGhost;
+        targetBtn.classList.add(
+          "active",
+          "bg-white",
+          "dark:bg-slate-600",
+          "shadow-sm",
+          "text-slate-800",
+          "dark:text-white",
+        );
+
+        renderEngine();
+        focusHiddenInput();
+      }
+
+      function setView(viewName) {
+        state.view = viewName;
+        [el.btnViewSentence, el.btnViewFull].forEach((btn) =>
+          btn.classList.remove(
+            "active",
+            "bg-white",
+            "dark:bg-slate-600",
+            "shadow-sm",
+            "text-slate-800",
+            "dark:text-white",
+          ),
+        );
+
+        const targetBtn =
+          viewName === "sentence" ? el.btnViewSentence : el.btnViewFull;
+        targetBtn.classList.add(
+          "active",
+          "bg-white",
+          "dark:bg-slate-600",
+          "shadow-sm",
+          "text-slate-800",
+          "dark:text-white",
+        );
+
+        renderEngine();
+        focusHiddenInput();
+      }
+
+      function resetCurrentSentence() {
+        state.currentWordIndex = 0;
+        state.currentCharIndex = 0;
+        const currentSentence = state.sentences[state.currentSentenceIndex];
+        if (currentSentence) {
+          currentSentence.words.forEach((w) => (w.isRevealed = false));
+        }
+        renderEngine();
+        focusHiddenInput();
+      }
+
+      /**
+       * AUTO TRANSLATION FALLBACK (MYMEMORY API)
+       */
+      async function handleAutoTranslate() {
+        const enText = el.inputCustomEn.value.trim();
+        if (!enText) return;
+
+        el.btnAutoTranslate.innerHTML =
+          '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Đang dịch...';
+
+        const sentences = enText.match(/[^.!?]+[.!?]+/g) || [enText];
+        const translatedSentences = [];
+
+        for (let sent of sentences) {
+          try {
+            const res = await fetch(
+              `https://api.mymemory.translated.net/get?q=${encodeURIComponent(sent.trim())}&langpair=en|vi`,
+            );
+            const data = await res.json();
+            if (data && data.responseData && data.responseData.translatedText) {
+              translatedSentences.push(data.responseData.translatedText);
+            } else {
+              translatedSentences.push(sent.trim());
+            }
+          } catch (err) {
+            translatedSentences.push(sent.trim());
+          }
+        }
+
+        el.inputCustomVn.value = translatedSentences.join("\n");
+        el.btnAutoTranslate.innerHTML =
+          '<i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Tự động dịch sang Tiếng Việt';
+      }
+
+      /**
+       * THEME MANAGEMENT
+       */
+      function updateThemeFromSystem() {
+        if (
+          window.matchMedia &&
+          window.matchMedia("(prefers-color-scheme: dark)").matches
+        ) {
+          document.documentElement.classList.add("dark");
+        }
+      }
+
+      function toggleTheme() {
+        document.documentElement.classList.toggle("dark");
+      }
+
+      // Initialize application on window ready
+      window.addEventListener("DOMContentLoaded", () => {
+        initApp();
+        setTimeout(focusHiddenInput, 300);
+      });
+    </script>
+  </body>
+</html>
