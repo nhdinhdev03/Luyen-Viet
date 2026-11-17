@@ -272,6 +272,41 @@
         color: #f8fafc;
         box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3);
       }
+      /* 2026 reading studio: select only the English source, never the ghost text. */
+      /* Allow native highlight inside masked typing text; mapped back to source English. */
+      #essay-display, #essay-display *, #essay-display .sentence-block {
+        user-select: text !important;
+        -webkit-user-select: text !important;
+        -webkit-touch-callout: default;
+      }
+      #essay-display { cursor: text; }
+      #essay-display ::selection {
+        background: rgba(129, 140, 248, .38);
+        color: #312e81;
+      }
+      .dark #essay-display ::selection {
+        background: rgba(99, 102, 241, .65);
+        color: #fff;
+      }
+      #essay-display .char-span { cursor: text; }
+      .selection-toolbar {
+        position: fixed;
+        z-index: 90;
+        width: min(390px, calc(100vw - 24px));
+        filter: drop-shadow(0 14px 25px rgba(15,23,42,.23));
+        animation: audio-toolbar-enter .16s ease-out;
+      }
+      @keyframes audio-toolbar-enter {
+        from { opacity: 0; transform: translateY(5px) scale(.98); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+      }
+      button:focus-visible, select:focus-visible, [tabindex]:focus-visible {
+        outline: 3px solid #a5b4fc;
+        outline-offset: 3px;
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .selection-toolbar, #smooth-caret { animation: none !important; transition: none !important; }
+      }
     </style>
   </head>
   <body
@@ -282,7 +317,7 @@
       class="bg-white/85 dark:bg-slate-900/80 backdrop-blur-xl border-b border-slate-200/80 dark:border-slate-800/80 sticky top-0 z-40 transition-colors"
     >
       <div
-        class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3"
+        class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-16 py-2 flex flex-wrap md:flex-nowrap items-center justify-between gap-2.5"
       >
         <!-- Brand Identity -->
         <div class="flex items-center gap-3.5 min-w-0">
@@ -316,7 +351,7 @@
         </div>
 
         <!-- Telemetry / Stats Dashboard Bar -->
-        <div class="flex items-center gap-2 sm:gap-3 text-xs">
+        <div class="order-3 md:order-none flex items-center justify-center gap-1.5 sm:gap-3 text-xs w-full md:w-auto">
           <!-- WPM -->
           <div
             class="flex items-center gap-2 bg-slate-100/80 dark:bg-slate-800/70 px-2.5 sm:px-3.5 py-1.5 rounded-xl border border-slate-200/70 dark:border-slate-700/60 transition-colors"
@@ -567,7 +602,8 @@
       <!-- Primary High-Performance 60FPS Typing Arena -->
       <section
         id="typing-wrapper"
-        aria-label="Khu vực luyện gõ văn bản"
+        tabindex="0"
+        aria-label="Khu vực luyện gõ. Bôi đen chữ hoặc các dấu gạch để nghe phát âm ngay tại đây."
         class="relative bg-white dark:bg-slate-900 rounded-3xl border border-slate-200/90 dark:border-slate-800 p-6 sm:p-10 shadow-soft min-h-[290px] flex flex-col justify-between overflow-hidden cursor-text transition-colors group"
       >
         <!-- Subtle top studio highlight border -->
@@ -624,8 +660,12 @@
               class="hidden sm:inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-slate-50 dark:bg-slate-800/50 border border-slate-200/60 dark:border-slate-800 text-slate-500 dark:text-slate-400"
             >
               <i class="fa-solid fa-bolt text-amber-400"></i>
-              <span>Gõ trực tiếp trên bàn phím (Không cần click)</span>
+              <span>Gõ trực tiếp hoặc bôi đen chữ để nghe</span>
             </span>
+            <button type="button" id="reader-accent" class="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border border-indigo-200/80 dark:border-indigo-500/40 bg-indigo-50/80 dark:bg-indigo-500/10 hover:bg-indigo-100 dark:hover:bg-indigo-500/20 text-indigo-700 dark:text-indigo-200 font-semibold transition" title="Chọn giọng đọc Anh-Mỹ hoặc Anh-Anh">
+              <i class="fa-solid fa-headphones text-xs"></i>
+              <span>Giọng <strong id="reader-accent-label">US</strong></span>
+            </button>
             <button
               id="btn-reset-sentence"
               title="Tập lại câu này (Phím Esc)"
@@ -635,6 +675,11 @@
               <span class="hidden md:inline">Làm lại câu</span>
             </button>
           </div>
+        </div>
+
+        <div class="relative z-10 flex items-center gap-2 text-xs text-indigo-700/90 dark:text-indigo-300 bg-indigo-50/75 dark:bg-indigo-500/10 border border-indigo-100 dark:border-indigo-500/20 rounded-xl py-2 px-3 mb-2 w-fit max-w-full select-none">
+          <i class="fa-solid fa-volume-high text-indigo-500"></i>
+          <span><strong>Bôi đen ngay dòng gõ</strong> để nghe từ hoặc cả cụm, kể cả khi chữ đang ẩn. Nhấp đúp để nghe một từ.</span>
         </div>
 
         <!-- Dynamic Floating Meaning Pill -->
@@ -656,8 +701,8 @@
 
         <!-- Text Display Area (Pre-rendered Spans for zero layout reflows) -->
         <div
-          id="essay-display"
-          class="relative z-10 font-mono text-xl sm:text-2xl sm:leading-[2.1rem] tracking-wide select-none outline-none break-words my-auto py-5"
+          id="essay-display" lang="en"
+          class="relative z-10 font-mono text-xl sm:text-2xl sm:leading-[2.1rem] tracking-wide outline-none break-words my-auto py-5"
         >
           <!-- Dynamically populated DOM spans -->
         </div>
@@ -823,6 +868,18 @@
         </div>
       </section>
     </main>
+
+    <!-- Floating audio toolbar positioned by selection in the typing arena. -->
+    <div id="selection-audio-toolbar" class="selection-toolbar hidden rounded-2xl border border-indigo-200/60 dark:border-indigo-400/30 bg-white/95 dark:bg-slate-900/95 backdrop-blur-xl p-2" role="toolbar" aria-label="Nghe phát âm phần tiếng Anh đã bôi đen">
+      <div id="selection-audio-preview" dir="auto" class="truncate px-2.5 py-1.5 text-xs font-semibold text-slate-700 dark:text-slate-100" title="Phần tiếng Anh đang được chọn"></div>
+      <div class="flex gap-1.5">
+        <button id="selection-play" type="button" class="flex-1 flex items-center justify-center gap-2 py-2.5 rounded-xl bg-indigo-600 text-white text-xs font-bold hover:bg-indigo-500" title="Phát âm phần đã chọn"><i class="fa-solid fa-volume-high"></i>Nghe đoạn chọn</button>
+        <button id="selection-play-slow" type="button" class="shrink-0 px-3 py-2.5 rounded-xl bg-indigo-50 dark:bg-indigo-500/15 text-indigo-700 dark:text-indigo-200 text-xs font-bold hover:bg-indigo-100 dark:hover:bg-indigo-500/25" title="Nghe chậm phần đã chọn"><i class="fa-solid fa-gauge-low mr-1"></i>0.7×</button>
+        <button id="selection-stop" type="button" class="shrink-0 w-10 rounded-xl bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-200 hover:text-rose-600" title="Dừng phát âm"><i class="fa-solid fa-stop"></i></button>
+        <button id="selection-close" type="button" class="shrink-0 w-8 rounded-xl text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700" title="Đóng thanh phát âm"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+    </div>
+    <div id="app-toast" role="status" aria-live="polite" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 z-[100] max-w-[90vw] px-4 py-2.5 text-xs font-semibold rounded-xl bg-slate-900 dark:bg-indigo-700 text-white shadow-xl"></div>
 
     <!-- Modal: Essay Library & Custom Manager -->
     <div
@@ -1208,6 +1265,9 @@
         view: "sentence", // 'sentence', 'full'
         consecutiveErrors: 0, // Counts consecutive errors on current char for auto-hint
         speechRate: 0.9,
+        speechLocale: "en-US",
+        selectedSpeechText: "",
+        renderedSpeechChars: [], // The original English behind masked character spans.
         startTime: null,
         totalTyped: 0,
         correctTyped: 0,
@@ -1218,6 +1278,8 @@
       };
 
       let idleCaretTimer = null;
+      let selectionFrame = 0;
+      let toastTimer = null;
 
       // DOM Element Cache
       const el = {
@@ -1244,6 +1306,15 @@
         wordsBreakdownContainer: document.getElementById(
           "words-breakdown-container",
         ),
+        readerAccent: document.getElementById("reader-accent"),
+        readerAccentLabel: document.getElementById("reader-accent-label"),
+        selectionToolbar: document.getElementById("selection-audio-toolbar"),
+        selectionPreview: document.getElementById("selection-audio-preview"),
+        selectionPlay: document.getElementById("selection-play"),
+        selectionPlaySlow: document.getElementById("selection-play-slow"),
+        selectionStop: document.getElementById("selection-stop"),
+        selectionClose: document.getElementById("selection-close"),
+        appToast: document.getElementById("app-toast"),
 
         // Buttons
         btnModeGhost: document.getElementById("mode-ghost"),
@@ -1293,6 +1364,10 @@
       function initApp() {
         setupEventListeners();
         loadSavedEssaysFromStorage();
+        try {
+          state.speechLocale = localStorage.getItem("essay_speech_locale") === "en-GB" ? "en-GB" : "en-US";
+        } catch (_) {}
+        el.readerAccentLabel.textContent = state.speechLocale === "en-GB" ? "UK" : "US";
 
         // Load default essay if none exists
         if (state.savedEssays.length === 0) {
@@ -1359,9 +1434,9 @@
           .replace(/\s+/g, " ")
           .trim();
 
-        const rawSentences = normalizedEn.match(/[^.!?]+[.!?]+/g) || [
-          normalizedEn,
-        ];
+        // Keep an unfinished last sentence, including essays without ending punctuation.
+        const rawSentences = normalizedEn.match(/[^.!?]+(?:[.!?]+|$)/g) || [normalizedEn];
+        hideSelectionToolbar();
 
         state.sentences = rawSentences.map((sentText, sIdx) => {
           const trimmedSent = sentText.trim();
@@ -1417,6 +1492,8 @@
        */
       function buildPreRenderedDOM() {
         if (state.sentences.length === 0) return;
+        window.getSelection()?.removeAllRanges();
+        hideSelectionToolbar();
 
         el.totalSentencesNum.innerText = state.sentences.length;
         el.currentSentenceNum.innerText = state.currentSentenceIndex + 1;
@@ -1435,6 +1512,7 @@
 
         el.display.innerHTML = "";
         state.flatChars = []; // Cache array for O(1) keystroke updates
+        state.renderedSpeechChars = []; // Includes all visible sentences in full view
 
         const sentencesToRender =
           state.view === "sentence"
@@ -1457,7 +1535,12 @@
               : "opacity-30"
           }`;
 
+          let sourceCursor = 0;
           data.words.forEach((wObj, wIdx) => {
+            const locatedAt = data.text.indexOf(wObj.text, sourceCursor);
+            const wordStart = locatedAt >= 0 ? locatedAt : sourceCursor;
+            sourceCursor = wordStart + wObj.text.length;
+
             const wordWrapper = document.createElement("span");
             const isActiveWord =
               sentIndex === state.currentSentenceIndex &&
@@ -1488,6 +1571,15 @@
                 });
               }
 
+              state.renderedSpeechChars.push({
+                domSpan: charSpan,
+                sentIndex,
+                offset: wordStart + cIdx,
+                char: targetChar,
+                charIndex: cIdx,
+                wordIndex: wIdx,
+                isWord: wObj.isWord,
+              });
               wordWrapper.appendChild(charSpan);
             }
 
@@ -1501,6 +1593,7 @@
 
           el.display.appendChild(sentenceBlock);
         });
+
 
         // Refresh visuals on all spans
         updateCharSpansVisuals();
@@ -1542,15 +1635,32 @@
               );
             } else if (state.mode === "first") {
               domSpan.innerText = item.charIndex === 0 ? char : "_";
-              domSpan.classList.add(
-                item.charIndex === 0
-                  ? "text-slate-700 dark:text-slate-200"
-                  : "text-slate-400 dark:text-slate-500 char-masked-hint",
-              );
+              domSpan.classList.add(...(item.charIndex === 0
+                ? ["text-slate-700", "dark:text-slate-200"]
+                : ["text-slate-400", "dark:text-slate-500", "char-masked-hint"]));
             } else if (state.mode === "ghost") {
               domSpan.innerText = char;
               domSpan.classList.add("text-slate-300", "dark:text-slate-600");
             }
+          }
+        });
+        // In whole-essay view, paint non-active sentences too (do not change typing state).
+        state.renderedSpeechChars.forEach(item => {
+          if (item.sentIndex === state.currentSentenceIndex) return;
+          const { domSpan, char, isWord, charIndex } = item;
+          domSpan.className = "char-span font-mono font-medium";
+          if (!isWord) {
+            domSpan.textContent = char;
+            domSpan.classList.add("text-slate-400", "dark:text-slate-500");
+          } else if (state.mode === "ghost") {
+            domSpan.textContent = char;
+            domSpan.classList.add("text-slate-300", "dark:text-slate-600");
+          } else if (state.mode === "first" && charIndex === 0) {
+            domSpan.textContent = char;
+            domSpan.classList.add("text-slate-700", "dark:text-slate-200");
+          } else {
+            domSpan.textContent = "_";
+            domSpan.classList.add("char-masked-hint", "text-slate-400", "dark:text-slate-500");
           }
         });
       }
@@ -1706,13 +1816,18 @@
                 ? cleanText[0] + "..."
                 : "•••";
 
-          chip.innerHTML = `
-            <span class="font-bold font-mono flex items-center gap-1 ${isActive ? "text-white" : "text-slate-900 dark:text-slate-100"}">
-              ${isCompleted ? '<i class="fa-solid fa-check text-[9px] text-emerald-500"></i>' : ""}
-              ${enLabel}
-            </span>
-            <span class="text-[10px] opacity-85 truncate max-w-[120px]">${wObj.meaning || "nghĩa"}</span>
-          `;
+          const wordLabel = document.createElement("span");
+          wordLabel.className = `font-bold font-mono flex items-center gap-1 ${isActive ? "text-white" : "text-slate-900 dark:text-slate-100"}`;
+          if (isCompleted) {
+            const check = document.createElement("i");
+            check.className = "fa-solid fa-check text-[9px] text-emerald-500";
+            wordLabel.appendChild(check);
+          }
+          wordLabel.appendChild(document.createTextNode(enLabel));
+          const meaningLabel = document.createElement("span");
+          meaningLabel.className = "text-[10px] opacity-85 truncate max-w-[120px]";
+          meaningLabel.textContent = wObj.meaning || "nghĩa";
+          chip.append(wordLabel, meaningLabel);
 
           chip.addEventListener("click", () => {
             speakText(cleanText);
@@ -1927,7 +2042,12 @@
             tag.className =
               "px-2.5 py-1 bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/25 rounded-lg font-mono font-medium flex items-center gap-1";
             const vnMeaning = CORE_DICTIONARY[word] || "từ vựng";
-            tag.innerHTML = `<span>${word}</span> <span class="text-[10px] opacity-75">(${vnMeaning})</span>`;
+            const english = document.createElement("span");
+            english.textContent = word;
+            const vietnamese = document.createElement("span");
+            vietnamese.className = "text-[10px] opacity-75";
+            vietnamese.textContent = `(${vnMeaning})`;
+            tag.append(english, vietnamese);
             el.weakWordsList.appendChild(tag);
           });
         }
@@ -2027,13 +2147,99 @@
         }
       }
 
-      function speakText(text, lang = "en-US") {
-        if (!("speechSynthesis" in window)) return;
-        window.speechSynthesis.cancel();
-        const utterance = new SpeechSynthesisUtterance(text);
+      /** Map a browser selection of letters/underscores to the REAL essay content.
+       * Never replace masked glyphs in the DOM: revealing happens only in the temporary audio toolbar.
+       */
+      function getTypingSelectionText(selection) {
+        if (!selection || !selection.rangeCount || selection.isCollapsed) return "";
+        const range = selection.getRangeAt(0);
+        if (!el.display.contains(range.startContainer) || !el.display.contains(range.endContainer)) return "";
+        const touched = [];
+        for (const item of state.renderedSpeechChars) {
+          if (range.intersectsNode(item.domSpan)) touched.push(item);
+        }
+        if (!touched.length) return "";
+        const pieces = [];
+        let first = touched[0];
+        let last = first;
+        for (let i = 1; i < touched.length; i++) {
+          const item = touched[i];
+          if (item.sentIndex !== last.sentIndex) {
+            const preceding = state.sentences[first.sentIndex];
+            if (preceding) pieces.push(preceding.text.slice(first.offset, last.offset + 1));
+            pieces.push(" ");
+            first = item;
+          }
+          last = item;
+        }
+        const finalSentence = state.sentences[first.sentIndex];
+        if (finalSentence) pieces.push(finalSentence.text.slice(first.offset, last.offset + 1));
+        return pieces.join("").replace(/\s+/g, " ").trim();
+      }
+
+      function showToast(message) {
+        el.appToast.textContent = message;
+        el.appToast.classList.remove("hidden");
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => el.appToast.classList.add("hidden"), 3200);
+      }
+
+      function speakText(text, lang = state.speechLocale, rate = state.speechRate) {
+        const clean = String(text || "").replace(/\s+/g, " ").trim();
+        if (!clean) return;
+        if (!("speechSynthesis" in window) || !("SpeechSynthesisUtterance" in window)) {
+          showToast("Trình duyệt này chưa hỗ trợ đọc văn bản. Hãy thử Chrome hoặc Edge.");
+          return;
+        }
+        const synth = window.speechSynthesis;
+        synth.cancel();
+        const utterance = new SpeechSynthesisUtterance(clean);
         utterance.lang = lang;
-        utterance.rate = state.speechRate;
-        window.speechSynthesis.speak(utterance);
+        utterance.rate = rate;
+        const voices = synth.getVoices();
+        const exactVoice = voices.find(v => v.lang.toLowerCase() === lang.toLowerCase());
+        if (exactVoice) utterance.voice = exactVoice;
+        utterance.onerror = event => {
+          if (event.error && !["canceled", "interrupted"].includes(event.error)) {
+            showToast("Không phát được giọng đọc. Kiểm tra cài đặt âm thanh của trình duyệt.");
+          }
+        };
+        synth.speak(utterance);
+      }
+
+      function hideSelectionToolbar() {
+        if (el.selectionToolbar) el.selectionToolbar.classList.add("hidden");
+        state.selectedSpeechText = "";
+      }
+
+      function syncSelectionToolbar() {
+        const selection = window.getSelection();
+        const text = getTypingSelectionText(selection);
+        if (!text) { hideSelectionToolbar(); return; }
+        state.selectedSpeechText = text;
+        el.selectionPreview.textContent = text;
+        el.selectionPreview.title = text;
+        el.selectionToolbar.classList.remove("hidden");
+        const range = selection.getRangeAt(0);
+        const rectangles = [...range.getClientRects()];
+        const rect = rectangles.find(r => r.width > 0 && r.height > 0) || range.getBoundingClientRect();
+        const toolbarWidth = el.selectionToolbar.offsetWidth || 360;
+        const toolbarHeight = el.selectionToolbar.offsetHeight || 80;
+        const rawLeft = rect.left + rect.width / 2 - toolbarWidth / 2;
+        const left = Math.max(12, Math.min(window.innerWidth - toolbarWidth - 12, rawLeft));
+        let top = rect.top - toolbarHeight - 12;
+        if (top < 12) top = rect.bottom + 12;
+        top = Math.min(Math.max(12, top), Math.max(12, window.innerHeight - toolbarHeight - 12));
+        el.selectionToolbar.style.left = `${left}px`;
+        el.selectionToolbar.style.top = `${top}px`;
+      }
+
+      function queueSelectionSync() {
+        if (selectionFrame) return;
+        selectionFrame = requestAnimationFrame(() => {
+          selectionFrame = 0;
+          syncSelectionToolbar();
+        });
       }
 
       /**
@@ -2043,11 +2249,22 @@
         // Global keydown handler (No click needed to type!)
         window.addEventListener("keydown", (e) => {
           // If focus is inside text input/textarea/modal, skip engine handling
+          const target = e.target instanceof Element ? e.target : document.activeElement;
           const activeTag = document.activeElement.tagName;
+          const liveSelection = window.getSelection();
+          if (e.key === "Escape" && !el.selectionToolbar.classList.contains("hidden")) {
+            e.preventDefault();
+            window.getSelection()?.removeAllRanges();
+            hideSelectionToolbar();
+            return;
+          }
           if (
             activeTag === "INPUT" ||
             activeTag === "TEXTAREA" ||
-            !el.modalCustom.classList.contains("hidden")
+            !el.modalCustom.classList.contains("hidden") ||
+            !el.modalCompletion.classList.contains("hidden") ||
+            target.closest("#selection-audio-toolbar, select, [contenteditable='true']") ||
+            !!getTypingSelectionText(liveSelection)
           ) {
             return;
           }
@@ -2097,6 +2314,70 @@
             handleKeyInput(e.key);
           }
         });
+
+        // The typing arena is also the pronunciation selection surface.
+        // Never steal focus or clear the range when starting a drag inside the text.
+        el.wrapper.addEventListener("pointerdown", event => {
+          if (event.target.closest("button") || event.target.closest("#essay-display")) return;
+          window.getSelection()?.removeAllRanges();
+          hideSelectionToolbar();
+          el.wrapper.focus({ preventScroll: true });
+        });
+        el.display.addEventListener("pointerup", () => {
+          queueSelectionSync();
+          // Clicking without dragging still resumes normal global keyboard input.
+          if (!window.getSelection()?.toString().trim()) {
+            el.wrapper.focus({ preventScroll: true });
+          }
+        });
+        el.display.addEventListener("dblclick", event => {
+          const wordNode = event.target instanceof Element ? event.target.closest(".word-wrapper") : event.target.parentElement?.closest(".word-wrapper");
+          if (!wordNode) return;
+          const sent = state.sentences[Number(wordNode.dataset.sentIdx)];
+          const wObj = sent?.words[Number(wordNode.dataset.wordIdx)];
+          if (!wObj || !wObj.isWord) return;
+          const spans = wordNode.querySelectorAll(".char-span");
+          if (!spans.length) return;
+          const range = document.createRange();
+          range.setStart(spans[0].firstChild, 0);
+          range.setEnd(spans[spans.length - 1].firstChild, 1);
+          const selection = window.getSelection();
+          selection.removeAllRanges();
+          selection.addRange(range);
+          queueSelectionSync();
+        });
+        el.display.addEventListener("touchend", () => setTimeout(queueSelectionSync, 120), { passive: true });
+        // Click outside the selected text to resume typing.
+        document.addEventListener("pointerdown", event => {
+          if (!event.target.closest("#typing-wrapper, #selection-audio-toolbar")) {
+            const selection = window.getSelection();
+            if (getTypingSelectionText(selection)) selection.removeAllRanges();
+            hideSelectionToolbar();
+          }
+        });
+
+        el.readerAccent.addEventListener("click", () => {
+          state.speechLocale = state.speechLocale === "en-US" ? "en-GB" : "en-US";
+          el.readerAccentLabel.textContent = state.speechLocale === "en-GB" ? "UK" : "US";
+          try { localStorage.setItem("essay_speech_locale", state.speechLocale); } catch (_) {}
+        });
+        el.selectionPlay.addEventListener("click", () => speakText(state.selectedSpeechText));
+        el.selectionPlaySlow.addEventListener("click", () => speakText(state.selectedSpeechText, state.speechLocale, 0.7));
+        el.selectionStop.addEventListener("click", () => {
+          if ("speechSynthesis" in window) window.speechSynthesis.cancel();
+        });
+        el.selectionClose.addEventListener("click", hideSelectionToolbar);
+        // Preserve highlighted words when users press the floating speaker button.
+        el.selectionToolbar.addEventListener("pointerdown", event => {
+          if (event.target.closest("button")) event.preventDefault();
+        });
+        document.addEventListener("selectionchange", queueSelectionSync);
+        window.addEventListener("resize", () => {
+          if (!el.selectionToolbar.classList.contains("hidden")) queueSelectionSync();
+        });
+        window.addEventListener("scroll", () => {
+          if (!el.selectionToolbar.classList.contains("hidden")) queueSelectionSync();
+        }, { passive: true, capture: true });
 
         // Mode Switches
         el.btnModeGhost.addEventListener("click", () => setMode("ghost"));
@@ -2333,7 +2614,11 @@
           const btn = document.createElement("button");
           btn.className =
             "px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-200 hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition flex items-center gap-2 shadow-2xs";
-          btn.innerHTML = `<i class="fa-solid fa-file-lines text-indigo-500"></i> <span>${essay.title}</span>`;
+          const icon = document.createElement("i");
+          icon.className = "fa-solid fa-file-lines text-indigo-500";
+          const label = document.createElement("span");
+          label.textContent = essay.title;
+          btn.append(icon, label);
           btn.addEventListener("click", () => {
             loadEssayObject(essay);
             el.modalCustom.classList.add("hidden");
@@ -2360,7 +2645,7 @@
         el.btnAutoTranslate.innerHTML =
           '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Đang dịch...';
 
-        const sentences = enText.match(/[^.!?]+[.!?]+/g) || [enText];
+        const sentences = enText.match(/[^.!?]+(?:[.!?]+|$)/g) || [enText];
         const translatedSentences = [];
 
         for (let sent of sentences) {
