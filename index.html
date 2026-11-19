@@ -11,6 +11,9 @@
       rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
     />
+    <!-- Resource Hints for high performance -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <!-- Google Fonts: Plus Jakarta Sans & JetBrains Mono -->
     <link
       href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
@@ -104,10 +107,11 @@
         background-color: #4f46e5;
         border-radius: 9999px;
         pointer-events: none;
+        will-change: transform, height;
         transition:
-          transform 75ms cubic-bezier(0.22, 1, 0.36, 1),
+          transform 75ms cubic-bezier(0.2, 0.9, 0.3, 1),
           height 75ms ease,
-          opacity 150ms ease;
+          opacity 120ms ease;
         box-shadow:
           0 0 10px rgba(79, 70, 229, 0.7),
           0 0 3px rgba(79, 70, 229, 0.9);
@@ -139,12 +143,9 @@
       .char-span {
         display: inline-block;
         position: relative;
-        transition:
-          color 0.1s ease,
-          background-color 0.1s ease,
-          border-color 0.1s ease;
         border-bottom: 2px solid transparent;
         border-radius: 2px;
+        contain: layout style;
       }
 
       .char-correct {
@@ -233,10 +234,11 @@
         top: 0;
         left: 0;
         transform: translate(-50%, -108%);
+        will-change: transform, opacity;
         transition:
-          left 110ms cubic-bezier(0.2, 0.8, 0.2, 1),
-          top 110ms cubic-bezier(0.2, 0.8, 0.2, 1),
-          opacity 150ms ease;
+          left 90ms cubic-bezier(0.2, 0.8, 0.2, 1),
+          top 90ms cubic-bezier(0.2, 0.8, 0.2, 1),
+          opacity 120ms ease;
         pointer-events: none;
         z-index: 30;
         white-space: nowrap;
@@ -305,8 +307,13 @@
         outline-offset: 3px;
       }
       @media (prefers-reduced-motion: reduce) {
-        .selection-toolbar, #smooth-caret { animation: none !important; transition: none !important; }
+        *, *::before, *::after {
+          animation-duration: 0.01ms !important;
+          animation-iteration-count: 1 !important;
+          transition-duration: 0.01ms !important;
+        }
       }
+      
     </style>
   </head>
   <body
@@ -526,7 +533,7 @@
 
           <!-- View Layout Toggle -->
           <div
-            class="hidden md:flex items-center bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/50 font-semibold"
+            class="flex items-center bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl border border-slate-200/60 dark:border-slate-700/50 font-semibold"
           >
             <button
               id="view-sentence"
@@ -1133,7 +1140,8 @@
     <!-- Application Script -->
     <script>
       /**
-       * DEFAULT SAMPLE ESSAY & INTEGRATED DICTIONARY
+       * HIGH-PERFORMANCE 60-120FPS TYPING & LEARNING ENGINE
+       * Zero-latency typing, O(1) word indexing, batch layout reads/writes
        */
       const DEFAULT_ESSAY_TITLE = "Spending Habits Essay";
       const DEFAULT_ESSAY_TEXT = `My spending habits were often very bad in the past because I bought many products that I did not really need. For example, when I saw big sales on online shopping apps or cool items in video games, I spent money quickly without thinking carefully. Sometimes, I also spent too much money on fast food, coffee, and hanging out with friends on weekends. For me, that was a waste of money, and I often ran out of cash before the end of the month. However, I am trying to change my habits and learn how to spend money and save money wisely. Now, before I buy anything, I always ask myself if it is truly necessary for my studies or daily life. I also write down what I buy every week. This simple habit helps me control my budget and save money for the future.`;
@@ -1251,32 +1259,38 @@
         future: "tương lai",
       };
 
+      const CHAR_BASE_CLASS = "char-span font-mono font-medium";
+
       /**
-       * STATE MANAGEMENT
+       * APPLICATION STATE
        */
       const state = {
-        sentences: [], // Sentence models
+        sentences: [],
         currentSentenceIndex: 0,
         currentWordIndex: 0,
-        currentCharIndex: 0, // Index inside flatChars array
-        flatChars: [], // Cached DOM elements & char mapping for current scope
+        currentCharIndex: 0,
+        flatChars: [],
         mode: "mask", // 'ghost', 'first', 'mask'
         errMode: "stop", // 'stop' (Học nhanh), 'free' (Gõ tự do)
         view: "sentence", // 'sentence', 'full'
-        consecutiveErrors: 0, // Counts consecutive errors on current char for auto-hint
+        consecutiveErrors: 0,
         speechRate: 0.9,
         speechLocale: "en-US",
         selectedSpeechText: "",
-        renderedSpeechChars: [], // The original English behind masked character spans.
+        renderedSpeechChars: [],
         startTime: null,
         totalTyped: 0,
         correctTyped: 0,
         hintsUsedCount: 0,
         weakWords: new Set(),
         isCompleted: false,
-        savedEssays: [], // LocalStorage saved items
+        savedEssays: [],
       };
 
+      // Performance cached references
+      let _prevActiveWordWrapper = null;
+      let _caretRafPending = false;
+      let _breakdownChips = []; // Cache breakdown DOM nodes for O(1) active toggles
       let idleCaretTimer = null;
       let selectionFrame = 0;
       let toastTimer = null;
@@ -1296,16 +1310,12 @@
         statHints: document.getElementById("stat-hints"),
         currentSentenceNum: document.getElementById("current-sentence-num"),
         totalSentencesNum: document.getElementById("total-sentences-num"),
-        sentenceProgressPercent: document.getElementById(
-          "sentence-progress-percent",
-        ),
+        sentenceProgressPercent: document.getElementById("sentence-progress-percent"),
         currentSentenceVn: document.getElementById("current-sentence-vn"),
         targetWordEn: document.getElementById("target-word-en"),
         targetWordVn: document.getElementById("target-word-vn"),
         wordLengthBadge: document.getElementById("word-length-badge"),
-        wordsBreakdownContainer: document.getElementById(
-          "words-breakdown-container",
-        ),
+        wordsBreakdownContainer: document.getElementById("words-breakdown-container"),
         readerAccent: document.getElementById("reader-accent"),
         readerAccentLabel: document.getElementById("reader-accent-label"),
         selectionToolbar: document.getElementById("selection-audio-toolbar"),
@@ -1316,7 +1326,7 @@
         selectionClose: document.getElementById("selection-close"),
         appToast: document.getElementById("app-toast"),
 
-        // Buttons
+        // Control Ribbon Buttons
         btnModeGhost: document.getElementById("mode-ghost"),
         btnModeFirst: document.getElementById("mode-first"),
         btnModeMask: document.getElementById("mode-mask"),
@@ -1338,7 +1348,7 @@
         btnOpenEssayModal: document.getElementById("btn-open-essay-modal"),
         btnThemeToggle: document.getElementById("btn-theme-toggle"),
 
-        // Modals & Custom
+        // Modals
         modalCustom: document.getElementById("modal-custom"),
         btnCloseModal: document.getElementById("btn-close-modal"),
         essaySavedList: document.getElementById("essay-saved-list"),
@@ -1359,17 +1369,18 @@
       };
 
       /**
-       * INITIALIZATION
+       * APP INITIALIZATION
        */
       function initApp() {
         setupEventListeners();
         loadSavedEssaysFromStorage();
+        initTheme();
+
         try {
           state.speechLocale = localStorage.getItem("essay_speech_locale") === "en-GB" ? "en-GB" : "en-US";
         } catch (_) {}
         el.readerAccentLabel.textContent = state.speechLocale === "en-GB" ? "UK" : "US";
 
-        // Load default essay if none exists
         if (state.savedEssays.length === 0) {
           const defaultObj = {
             id: "default-1",
@@ -1382,28 +1393,39 @@
         }
 
         loadEssayObject(state.savedEssays[0]);
-        updateThemeFromSystem();
 
-        window.addEventListener("resize", updateCaretAndPillPosition);
-        window.addEventListener("scroll", updateCaretAndPillPosition, {
-          passive: true,
-        });
+        window.addEventListener("resize", scheduleCaretUpdate, { passive: true });
+        window.addEventListener("scroll", scheduleCaretUpdate, { passive: true });
 
         if ("ResizeObserver" in window) {
-          const ro = new ResizeObserver(() => {
-            requestAnimationFrame(updateCaretAndPillPosition);
-          });
+          const ro = new ResizeObserver(() => scheduleCaretUpdate());
           ro.observe(el.display);
           ro.observe(el.wrapper);
         }
       }
 
+      function initTheme() {
+        try {
+          const savedTheme = localStorage.getItem("essay_theme");
+          if (savedTheme === "dark" || (!savedTheme && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+            document.documentElement.classList.add("dark");
+          } else {
+            document.documentElement.classList.remove("dark");
+          }
+        } catch (_) {}
+      }
+
+      function toggleTheme() {
+        const isDark = document.documentElement.classList.toggle("dark");
+        try {
+          localStorage.setItem("essay_theme", isDark ? "dark" : "light");
+        } catch (_) {}
+      }
+
       function loadSavedEssaysFromStorage() {
         try {
           const stored = localStorage.getItem("essay_practice_list");
-          if (stored) {
-            state.savedEssays = JSON.parse(stored);
-          }
+          if (stored) state.savedEssays = JSON.parse(stored);
         } catch (e) {
           state.savedEssays = [];
         }
@@ -1411,10 +1433,7 @@
 
       function saveEssaysToStorage() {
         try {
-          localStorage.setItem(
-            "essay_practice_list",
-            JSON.stringify(state.savedEssays),
-          );
+          localStorage.setItem("essay_practice_list", JSON.stringify(state.savedEssays));
         } catch (e) {}
       }
 
@@ -1424,36 +1443,45 @@
       }
 
       /**
+       * DEDUPLICATED 60-120FPS RAF SCHEDULER
+       */
+      function scheduleCaretUpdate() {
+        if (_caretRafPending) return;
+        _caretRafPending = true;
+        requestAnimationFrame(() => {
+          _caretRafPending = false;
+          updateCaretAndPillPosition();
+        });
+      }
+
+      /**
        * ESSAY PARSER & MODEL BUILDER
        */
       function parseEssayText(rawEn, vnArray = []) {
-        // Smart quote normalization
         const normalizedEn = rawEn
           .replace(/[\u2018\u2019]/g, "'")
           .replace(/[\u201C\u201D]/g, '"')
           .replace(/\s+/g, " ")
           .trim();
 
-        // Keep an unfinished last sentence, including essays without ending punctuation.
         const rawSentences = normalizedEn.match(/[^.!?]+(?:[.!?]+|$)/g) || [normalizedEn];
         hideSelectionToolbar();
 
         state.sentences = rawSentences.map((sentText, sIdx) => {
           const trimmedSent = sentText.trim();
-          const wordsRaw =
-            trimmedSent.match(/[a-zA-Z0-9']+|[^a-zA-Z0-9'\s]+/g) || [];
+          const wordsRaw = trimmedSent.match(/[a-zA-Z0-9']+|[^a-zA-Z0-9'\s]+/g) || [];
 
           const wordObjects = wordsRaw.map((wStr) => {
             const isWord = /[a-zA-Z0-9']/.test(wStr);
             const cleanLower = wStr.toLowerCase().replace(/[^a-z0-9]/g, "");
-            const meaning = isWord
-              ? CORE_DICTIONARY[cleanLower] || "từ vựng"
-              : "";
+            const meaning = isWord ? CORE_DICTIONARY[cleanLower] || "từ vựng" : "";
             return {
               text: wStr,
               isWord: isWord,
               meaning: meaning,
               isRevealed: false,
+              charStartIndex: 0,
+              charEndIndex: 0,
             };
           });
 
@@ -1479,60 +1507,48 @@
         state.hintsUsedCount = 0;
         state.weakWords.clear();
         state.isCompleted = false;
+        _prevActiveWordWrapper = null;
 
-        el.statWpm.innerText = "0";
-        el.statAcc.innerText = "100%";
-        el.statHints.innerText = "0";
+        el.statWpm.textContent = "0";
+        el.statAcc.textContent = "100%";
+        el.statHints.textContent = "0";
         el.modalCompletion.classList.add("hidden");
       }
 
       /**
-       * ULTRA-SMOOTH DOM PRE-RENDERER & CACHE BUILDER
-       * Creates character <span class="char-span"> once. Keystrokes update classList only!
+       * ULTRA-SMOOTH DOM PRE-RENDERER & O(1) WORD RANGE CACHE
        */
       function buildPreRenderedDOM() {
         if (state.sentences.length === 0) return;
         window.getSelection()?.removeAllRanges();
         hideSelectionToolbar();
 
-        el.totalSentencesNum.innerText = state.sentences.length;
-        el.currentSentenceNum.innerText = state.currentSentenceIndex + 1;
+        el.totalSentencesNum.textContent = state.sentences.length;
+        el.currentSentenceNum.textContent = state.currentSentenceIndex + 1;
 
         const currentSentence = state.sentences[state.currentSentenceIndex];
-        el.currentSentenceVn.innerText = currentSentence
-          ? currentSentence.translation
-          : "";
+        el.currentSentenceVn.textContent = currentSentence ? currentSentence.translation : "";
 
-        // Update Progress Percentage
-        const progressPct = Math.round(
-          (state.currentSentenceIndex / state.sentences.length) * 100,
-        );
-        el.sentenceProgressPercent.innerText = `${progressPct}%`;
+        const progressPct = Math.round((state.currentSentenceIndex / state.sentences.length) * 100);
+        el.sentenceProgressPercent.textContent = `${progressPct}%`;
         el.progressBar.style.width = `${progressPct}%`;
 
-        el.display.innerHTML = "";
-        state.flatChars = []; // Cache array for O(1) keystroke updates
-        state.renderedSpeechChars = []; // Includes all visible sentences in full view
+        el.display.replaceChildren();
+        state.flatChars = [];
+        state.renderedSpeechChars = [];
+        _prevActiveWordWrapper = null;
 
         const sentencesToRender =
           state.view === "sentence"
-            ? [
-                {
-                  sentIndex: state.currentSentenceIndex,
-                  data: state.sentences[state.currentSentenceIndex],
-                },
-              ]
-            : state.sentences.map((data, sIdx) => ({
-                sentIndex: sIdx,
-                data: data,
-              }));
+            ? [{ sentIndex: state.currentSentenceIndex, data: state.sentences[state.currentSentenceIndex] }]
+            : state.sentences.map((data, sIdx) => ({ sentIndex: sIdx, data: data }));
+
+        const fragment = document.createDocumentFragment();
 
         sentencesToRender.forEach(({ sentIndex, data }) => {
           const sentenceBlock = document.createElement("span");
           sentenceBlock.className = `sentence-block transition-opacity duration-200 ${
-            sentIndex === state.currentSentenceIndex
-              ? "opacity-100"
-              : "opacity-30"
+            sentIndex === state.currentSentenceIndex ? "opacity-100" : "opacity-30"
           }`;
 
           let sourceCursor = 0;
@@ -1541,22 +1557,23 @@
             const wordStart = locatedAt >= 0 ? locatedAt : sourceCursor;
             sourceCursor = wordStart + wObj.text.length;
 
+            const isCurrentActiveSentence = sentIndex === state.currentSentenceIndex;
+            if (isCurrentActiveSentence) {
+              wObj.charStartIndex = state.flatChars.length;
+            }
+
             const wordWrapper = document.createElement("span");
-            const isActiveWord =
-              sentIndex === state.currentSentenceIndex &&
-              wIdx === state.currentWordIndex;
+            const isActiveWord = isCurrentActiveSentence && wIdx === state.currentWordIndex;
 
             wordWrapper.className = `word-wrapper ${isActiveWord ? "active-word" : ""}`;
             wordWrapper.dataset.sentIdx = sentIndex;
             wordWrapper.dataset.wordIdx = wIdx;
+            if (isActiveWord) _prevActiveWordWrapper = wordWrapper;
 
             for (let cIdx = 0; cIdx < wObj.text.length; cIdx++) {
               const targetChar = wObj.text[cIdx];
               const charSpan = document.createElement("span");
-              charSpan.className = "char-span font-mono font-medium";
-
-              const isCurrentActiveSentence =
-                sentIndex === state.currentSentenceIndex;
+              charSpan.className = CHAR_BASE_CLASS;
 
               if (isCurrentActiveSentence) {
                 state.flatChars.push({
@@ -1583,91 +1600,96 @@
               wordWrapper.appendChild(charSpan);
             }
 
+            if (isCurrentActiveSentence) {
+              wObj.charEndIndex = state.flatChars.length;
+            }
+
             sentenceBlock.appendChild(wordWrapper);
 
-            // Use a normal breakable space so words wrap naturally across lines
+            // Breakable space so lines wrap naturally
             const spaceSpan = document.createElement("span");
             spaceSpan.textContent = " ";
             sentenceBlock.appendChild(spaceSpan);
           });
 
-          el.display.appendChild(sentenceBlock);
+          fragment.appendChild(sentenceBlock);
         });
 
+        el.display.appendChild(fragment);
 
-        // Refresh visuals on all spans
         updateCharSpansVisuals();
         updateWordRecognitionCard();
         renderSentenceWordsBreakdown();
-
-        // Position caret and floating pill smoothly
-        requestAnimationFrame(updateCaretAndPillPosition);
+        scheduleCaretUpdate();
       }
 
       /**
-       * FAST VISUAL UPDATE FOR ALL CHAR SPANS (O(N) only on sentence load)
+       * FAST VISUAL UPDATE FOR ALL CHAR SPANS
        */
       function updateCharSpansVisuals() {
-        state.flatChars.forEach((item, idx) => {
-          const { char, domSpan, isWord, wordIndex } = item;
-          const wordObj =
-            state.sentences[state.currentSentenceIndex].words[wordIndex];
+        const curSentence = state.sentences[state.currentSentenceIndex];
+        const curSentWords = curSentence ? curSentence.words : [];
 
-          domSpan.className = "char-span font-mono font-medium";
+        for (let idx = 0; idx < state.flatChars.length; idx++) {
+          const item = state.flatChars[idx];
+          const { char, domSpan, isWord, wordIndex, charIndex } = item;
+          const wordObj = curSentWords[wordIndex];
+
+          domSpan.className = CHAR_BASE_CLASS;
 
           if (idx < state.currentCharIndex) {
-            domSpan.innerText = char;
+            domSpan.textContent = char;
             domSpan.classList.add("char-correct");
-          } else if (wordObj.isRevealed) {
-            domSpan.innerText = char;
+          } else if (wordObj && wordObj.isRevealed) {
+            domSpan.textContent = char;
             domSpan.classList.add("char-hinted");
           } else if (!isWord) {
-            domSpan.innerText = char;
+            domSpan.textContent = char;
             domSpan.classList.add("text-slate-400", "dark:text-slate-500");
           } else {
-            // Apply mode visibility rule
             if (state.mode === "mask") {
-              domSpan.innerText = "_";
-              domSpan.classList.add(
-                "text-slate-400",
-                "dark:text-slate-500",
-                "char-masked-hint",
-              );
+              domSpan.textContent = "_";
+              domSpan.classList.add("text-slate-400", "dark:text-slate-500", "char-masked-hint");
             } else if (state.mode === "first") {
-              domSpan.innerText = item.charIndex === 0 ? char : "_";
-              domSpan.classList.add(...(item.charIndex === 0
-                ? ["text-slate-700", "dark:text-slate-200"]
-                : ["text-slate-400", "dark:text-slate-500", "char-masked-hint"]));
+              domSpan.textContent = charIndex === 0 ? char : "_";
+              if (charIndex === 0) {
+                domSpan.classList.add("text-slate-700", "dark:text-slate-200");
+              } else {
+                domSpan.classList.add("text-slate-400", "dark:text-slate-500", "char-masked-hint");
+              }
             } else if (state.mode === "ghost") {
-              domSpan.innerText = char;
+              domSpan.textContent = char;
               domSpan.classList.add("text-slate-300", "dark:text-slate-600");
             }
           }
-        });
-        // In whole-essay view, paint non-active sentences too (do not change typing state).
-        state.renderedSpeechChars.forEach(item => {
-          if (item.sentIndex === state.currentSentenceIndex) return;
-          const { domSpan, char, isWord, charIndex } = item;
-          domSpan.className = "char-span font-mono font-medium";
-          if (!isWord) {
-            domSpan.textContent = char;
-            domSpan.classList.add("text-slate-400", "dark:text-slate-500");
-          } else if (state.mode === "ghost") {
-            domSpan.textContent = char;
-            domSpan.classList.add("text-slate-300", "dark:text-slate-600");
-          } else if (state.mode === "first" && charIndex === 0) {
-            domSpan.textContent = char;
-            domSpan.classList.add("text-slate-700", "dark:text-slate-200");
-          } else {
-            domSpan.textContent = "_";
-            domSpan.classList.add("char-masked-hint", "text-slate-400", "dark:text-slate-500");
+        }
+
+        // Full view: non-active sentences
+        if (state.view === "full") {
+          for (let i = 0; i < state.renderedSpeechChars.length; i++) {
+            const item = state.renderedSpeechChars[i];
+            if (item.sentIndex === state.currentSentenceIndex) continue;
+            const { domSpan, char, isWord, charIndex } = item;
+            domSpan.className = CHAR_BASE_CLASS;
+            if (!isWord) {
+              domSpan.textContent = char;
+              domSpan.classList.add("text-slate-400", "dark:text-slate-500");
+            } else if (state.mode === "ghost") {
+              domSpan.textContent = char;
+              domSpan.classList.add("text-slate-300", "dark:text-slate-600");
+            } else if (state.mode === "first" && charIndex === 0) {
+              domSpan.textContent = char;
+              domSpan.classList.add("text-slate-700", "dark:text-slate-200");
+            } else {
+              domSpan.textContent = "_";
+              domSpan.classList.add("char-masked-hint", "text-slate-400", "dark:text-slate-500");
+            }
           }
-        });
+        }
       }
 
       /**
-       * SMOOTH MONKEYTYPE CARET & FLOATING PILL POSITIONING
-       * Reads coordinates directly from the HTML character span on screen
+       * BATCH READS & WRITES FOR 60FPS CARET & FLOATING PILL
        */
       function updateCaretAndPillPosition() {
         if (state.flatChars.length === 0) return;
@@ -1680,50 +1702,61 @@
         if (!targetItem || !targetItem.domSpan) return;
 
         const targetSpan = targetItem.domSpan;
+        const activeWordWrapper = targetSpan.closest(".word-wrapper");
+
+        // ---- PHASE 1: BATCH DOM READS ----
         const spanRect = targetSpan.getBoundingClientRect();
         const wrapperRect = el.wrapper.getBoundingClientRect();
-
-        // Origin of #typing-wrapper's padding box on screen
         const originLeft = wrapperRect.left + el.wrapper.clientLeft;
         const originTop = wrapperRect.top + el.wrapper.clientTop;
 
-        const caretLeft =
-          (isAtEnd ? spanRect.right : spanRect.left) - originLeft;
+        const caretLeft = (isAtEnd ? spanRect.right : spanRect.left) - originLeft;
         const caretTop = spanRect.top - originTop;
         const caretHeight = spanRect.height || 32;
 
-        // Apply 60FPS CSS Transform Matrix on Smooth Caret
-        el.caret.style.transform = `translate3d(${caretLeft}px, ${caretTop}px, 0)`;
-        el.caret.style.height = `${caretHeight}px`;
+        let pillLeft = 0;
+        let pillTop = 0;
+        let shouldShowPill = false;
 
-        // Position Floating Meaning Pill directly above active word
-        const activeWordWrapper = targetSpan.closest(".word-wrapper");
         if (activeWordWrapper) {
           const wordRect = activeWordWrapper.getBoundingClientRect();
           const pillWidth = el.floatingPill.offsetWidth || 120;
           const wrapperInnerWidth = el.wrapper.clientWidth;
 
-          let pillLeft = wordRect.left + wordRect.width / 2 - originLeft;
-          // Clamp horizontally so the pill never overflows left/right edges when lines wrap
+          let pLeft = wordRect.left + wordRect.width / 2 - originLeft;
           const minLeft = pillWidth / 2 + 12;
-          const maxLeft = Math.max(
-            minLeft,
-            wrapperInnerWidth - pillWidth / 2 - 12,
-          );
-          pillLeft = Math.min(Math.max(pillLeft, minLeft), maxLeft);
+          const maxLeft = Math.max(minLeft, wrapperInnerWidth - pillWidth / 2 - 12);
+          pillLeft = Math.min(Math.max(pLeft, minLeft), maxLeft);
+          pillTop = wordRect.top - originTop - 6;
+          shouldShowPill = true;
+        }
 
-          const pillTop = wordRect.top - originTop - 6;
+        // ---- PHASE 2: BATCH DOM WRITES ----
+        el.caret.style.transform = `translate3d(${caretLeft}px, ${caretTop}px, 0)`;
+        el.caret.style.height = `${caretHeight}px`;
 
+        if (shouldShowPill) {
           el.floatingPill.style.left = `${pillLeft}px`;
           el.floatingPill.style.top = `${pillTop}px`;
           el.floatingPill.style.opacity = "1";
-
-          // Highlight active word container
-          document
-            .querySelectorAll(".word-wrapper.active-word")
-            .forEach((w) => w.classList.remove("active-word"));
-          activeWordWrapper.classList.add("active-word");
         }
+
+        // O(1) Class cache update without querySelectorAll
+        if (activeWordWrapper && activeWordWrapper !== _prevActiveWordWrapper) {
+          if (_prevActiveWordWrapper) _prevActiveWordWrapper.classList.remove("active-word");
+          activeWordWrapper.classList.add("active-word");
+          _prevActiveWordWrapper = activeWordWrapper;
+        }
+      }
+
+      /**
+       * O(1) WORD COMPLETION CHECK
+       */
+      function isWordCompleted(sIdx, wIdx) {
+        if (sIdx !== state.currentSentenceIndex) return sIdx < state.currentSentenceIndex;
+        const word = state.sentences[sIdx]?.words[wIdx];
+        if (!word || word.charEndIndex === undefined) return false;
+        return state.currentCharIndex >= word.charEndIndex;
       }
 
       /**
@@ -1736,62 +1769,52 @@
         const activeWordObj = currentSentence.words[state.currentWordIndex];
         if (!activeWordObj) return;
 
-        const cleanWord = activeWordObj.text
-          .toLowerCase()
-          .replace(/[^a-z0-9]/g, "");
-        el.wordLengthBadge.innerText = `${cleanWord.length} ký tự`;
+        const cleanWord = activeWordObj.text.toLowerCase().replace(/[^a-z0-9]/g, "");
+        el.wordLengthBadge.textContent = `${cleanWord.length} ký tự`;
 
         if (activeWordObj.isWord) {
-          const meaning =
-            activeWordObj.meaning || CORE_DICTIONARY[cleanWord] || "từ vựng";
+          const meaning = activeWordObj.meaning || CORE_DICTIONARY[cleanWord] || "từ vựng";
 
-          // Update Floating Pill Text
-          el.pillVnText.innerText = meaning;
+          el.pillVnText.textContent = meaning;
           if (activeWordObj.isRevealed || state.consecutiveErrors >= 2) {
-            el.pillEnHint.innerText = activeWordObj.text;
+            el.pillEnHint.textContent = activeWordObj.text;
             el.pillEnHint.classList.remove("hidden");
           } else {
             el.pillEnHint.classList.add("hidden");
           }
 
-          // Update Side Card Text
           if (
             state.mode === "ghost" ||
             activeWordObj.isRevealed ||
             isWordCompleted(state.currentSentenceIndex, state.currentWordIndex)
           ) {
-            el.targetWordEn.innerText = activeWordObj.text;
+            el.targetWordEn.textContent = activeWordObj.text;
           } else if (state.mode === "first") {
-            el.targetWordEn.innerText =
-              activeWordObj.text[0] +
-              "•".repeat(Math.max(0, cleanWord.length - 1));
+            el.targetWordEn.textContent = activeWordObj.text[0] + "•".repeat(Math.max(0, cleanWord.length - 1));
           } else {
-            el.targetWordEn.innerText = "•".repeat(cleanWord.length);
+            el.targetWordEn.textContent = "•".repeat(cleanWord.length);
           }
 
-          el.targetWordVn.innerText = meaning;
+          el.targetWordVn.textContent = meaning;
         } else {
-          el.pillVnText.innerText = "Dấu câu";
+          el.pillVnText.textContent = "Dấu câu";
           el.pillEnHint.classList.add("hidden");
-          el.targetWordEn.innerText = activeWordObj.text;
-          el.targetWordVn.innerText = "Ký tự đặc biệt";
+          el.targetWordEn.textContent = activeWordObj.text;
+          el.targetWordVn.textContent = "Ký tự đặc biệt";
         }
       }
 
-      function isWordCompleted(sIdx, wIdx) {
-        const wordChars = state.flatChars.filter(
-          (c) => c.sentIndex === sIdx && c.wordIndex === wIdx,
-        );
-        if (wordChars.length === 0) return false;
-        return wordChars.every(
-          (c) => state.flatChars.indexOf(c) < state.currentCharIndex,
-        );
-      }
-
+      /**
+       * VOCABULARY BREAKDOWN CHIPS (Built once, O(1) status sync)
+       */
       function renderSentenceWordsBreakdown() {
-        el.wordsBreakdownContainer.innerHTML = "";
+        el.wordsBreakdownContainer.replaceChildren();
+        _breakdownChips = [];
+
         const currentSentence = state.sentences[state.currentSentenceIndex];
         if (!currentSentence) return;
+
+        const fragment = document.createDocumentFragment();
 
         currentSentence.words.forEach((wObj, idx) => {
           if (!wObj.isWord) return;
@@ -1801,92 +1824,125 @@
           const isActive = idx === state.currentWordIndex;
 
           const chip = document.createElement("div");
-          chip.className = `px-3.5 py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer flex flex-col gap-0.5 select-none active:scale-95 ${
-            isActive
-              ? "bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-500/30"
-              : isCompleted
-                ? "bg-emerald-50/90 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/60"
-                : "bg-slate-50/90 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-slate-700/70 hover:border-indigo-300 dark:hover:border-indigo-500/50"
-          }`;
+          chip.className = getChipClassName(isActive, isCompleted);
+          chip.dataset.wordIdx = idx;
+          chip.dataset.cleanText = cleanText;
 
-          const enLabel =
-            isCompleted || state.mode === "ghost" || isActive || wObj.isRevealed
-              ? cleanText
-              : state.mode === "first"
-                ? cleanText[0] + "..."
-                : "•••";
+          const enLabel = isCompleted || state.mode === "ghost" || isActive || wObj.isRevealed
+            ? cleanText
+            : state.mode === "first"
+              ? cleanText[0] + "..."
+              : "•••";
 
           const wordLabel = document.createElement("span");
           wordLabel.className = `font-bold font-mono flex items-center gap-1 ${isActive ? "text-white" : "text-slate-900 dark:text-slate-100"}`;
-          if (isCompleted) {
-            const check = document.createElement("i");
-            check.className = "fa-solid fa-check text-[9px] text-emerald-500";
-            wordLabel.appendChild(check);
-          }
-          wordLabel.appendChild(document.createTextNode(enLabel));
+
+          const checkIcon = document.createElement("i");
+          checkIcon.className = `fa-solid fa-check text-[9px] text-emerald-500 ${isCompleted ? "" : "hidden"}`;
+          wordLabel.appendChild(checkIcon);
+
+          const textSpan = document.createElement("span");
+          textSpan.className = "chip-text";
+          textSpan.textContent = enLabel;
+          wordLabel.appendChild(textSpan);
+
           const meaningLabel = document.createElement("span");
           meaningLabel.className = "text-[10px] opacity-85 truncate max-w-[120px]";
           meaningLabel.textContent = wObj.meaning || "nghĩa";
+
           chip.append(wordLabel, meaningLabel);
+          fragment.appendChild(chip);
 
-          chip.addEventListener("click", () => {
-            speakText(cleanText);
-            wObj.isRevealed = true;
-            updateCharSpansVisuals();
-            updateWordRecognitionCard();
-            requestAnimationFrame(updateCaretAndPillPosition);
+          _breakdownChips.push({
+            chipEl: chip,
+            wordLabel,
+            textSpan,
+            checkIcon,
+            wordIdx: idx,
+            wordObj: wObj,
+            cleanText,
           });
-
-          el.wordsBreakdownContainer.appendChild(chip);
         });
+
+        el.wordsBreakdownContainer.appendChild(fragment);
+      }
+
+      function getChipClassName(isActive, isCompleted) {
+        const base = "px-3.5 py-2 rounded-xl text-xs font-medium border transition-all cursor-pointer flex flex-col gap-0.5 select-none active:scale-95 ";
+        if (isActive) {
+          return base + "bg-indigo-600 text-white border-indigo-600 shadow-sm shadow-indigo-500/30";
+        }
+        if (isCompleted) {
+          return base + "bg-emerald-50/90 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border-emerald-200/80 dark:border-emerald-800/60";
+        }
+        return base + "bg-slate-50/90 dark:bg-slate-800/60 text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-slate-700/70 hover:border-indigo-300 dark:hover:border-indigo-500/50";
       }
 
       /**
-       * KEYSTROKE ENGINE & ERROR HANDLING (O(1) PERFORMANCE)
+       * O(1) INCREMENTAL CHIP SYNC WITHOUT REBUILDING DOM
+       */
+      function syncBreakdownChipsStatus() {
+        for (let i = 0; i < _breakdownChips.length; i++) {
+          const item = _breakdownChips[i];
+          const isCompleted = isWordCompleted(state.currentSentenceIndex, item.wordIdx);
+          const isActive = item.wordIdx === state.currentWordIndex;
+
+          item.chipEl.className = getChipClassName(isActive, isCompleted);
+          item.wordLabel.className = `font-bold font-mono flex items-center gap-1 ${isActive ? "text-white" : "text-slate-900 dark:text-slate-100"}`;
+
+          if (isCompleted) {
+            item.checkIcon.classList.remove("hidden");
+          } else {
+            item.checkIcon.classList.add("hidden");
+          }
+
+          if (isCompleted || state.mode === "ghost" || isActive || item.wordObj.isRevealed) {
+            item.textSpan.textContent = item.cleanText;
+          } else if (state.mode === "first") {
+            item.textSpan.textContent = item.cleanText[0] + "...";
+          } else {
+            item.textSpan.textContent = "•••";
+          }
+        }
+      }
+
+      /**
+       * KEYSTROKE ENGINE (O(1) PER CHAR)
        */
       function handleKeyInput(typedKey) {
         if (state.isCompleted || state.flatChars.length === 0) return;
 
-        if (!state.startTime) {
-          state.startTime = Date.now();
-        }
+        if (!state.startTime) state.startTime = Date.now();
 
-        // Remove blinking idle animation when user starts typing & restore after idle
         el.caret.classList.remove("caret-blinking");
         clearTimeout(idleCaretTimer);
         idleCaretTimer = setTimeout(() => {
           el.caret.classList.add("caret-blinking");
         }, 1200);
 
-        const curCharItem = state.flatChars[state.currentCharIndex];
+        let curCharItem = state.flatChars[state.currentCharIndex];
         if (!curCharItem) return;
 
-        // Ignore natural Space key press right between words
-        if (
-          typedKey === " " &&
-          curCharItem.charIndex === 0 &&
-          state.currentCharIndex > 0
-        ) {
+        // Space between words ignore
+        if (typedKey === " " && curCharItem.charIndex === 0 && state.currentCharIndex > 0) {
           return;
         }
 
         // Auto-advance non-word punctuation
-        if (!curCharItem.isWord) {
-          curCharItem.domSpan.innerText = curCharItem.char;
-          curCharItem.domSpan.className =
-            "char-span font-mono font-medium char-correct";
+        while (curCharItem && !curCharItem.isWord) {
+          curCharItem.domSpan.textContent = curCharItem.char;
+          curCharItem.domSpan.className = CHAR_BASE_CLASS + " char-correct";
           advanceCharPosition();
-          // Recursively process key if sentence hasn't ended
-          if (state.currentCharIndex > 0 && !state.isCompleted) {
-            handleKeyInput(typedKey);
-          }
-          return;
+          if (state.isCompleted) return;
+          curCharItem = state.flatChars[state.currentCharIndex];
         }
+
+        if (!curCharItem) return;
 
         const expectedChar = curCharItem.char;
         state.totalTyped++;
 
-        // Smart Quote & Case Insensitive Matching
+        // Smart Quotes & Case Insensitive Matching
         const isMatch =
           typedKey.toLowerCase() === expectedChar.toLowerCase() ||
           (typedKey === "'" && expectedChar === "’") ||
@@ -1896,44 +1952,30 @@
           state.correctTyped++;
           state.consecutiveErrors = 0;
 
-          // O(1) direct DOM update
-          curCharItem.domSpan.innerText = expectedChar;
-          curCharItem.domSpan.className =
-            "char-span font-mono font-medium char-correct";
+          curCharItem.domSpan.textContent = expectedChar;
+          curCharItem.domSpan.className = CHAR_BASE_CLASS + " char-correct";
 
           advanceCharPosition();
         } else {
-          // Incorrect Key Typed
           state.consecutiveErrors++;
-          state.weakWords.add(
-            curCharItem.wordText.toLowerCase().replace(/[^a-z0-9]/g, ""),
-          );
+          state.weakWords.add(curCharItem.wordText.toLowerCase().replace(/[^a-z0-9]/g, ""));
 
           if (state.errMode === "stop") {
-            // STOP ON ERROR MODE (Học nhanh - Chặn lỗi sai)
             curCharItem.domSpan.classList.add("char-wrong", "char-shake");
-            setTimeout(
-              () => curCharItem.domSpan.classList.remove("char-shake"),
-              220,
-            );
+            setTimeout(() => curCharItem.domSpan.classList.remove("char-shake"), 220);
 
-            // Auto hint after 2 consecutive wrong presses
             if (state.consecutiveErrors >= 2) {
-              const wordObj =
-                state.sentences[state.currentSentenceIndex].words[
-                  state.currentWordIndex
-                ];
+              const wordObj = state.sentences[state.currentSentenceIndex].words[state.currentWordIndex];
               if (wordObj) {
                 wordObj.isRevealed = true;
                 state.hintsUsedCount++;
                 updateCharSpansVisuals();
+                syncBreakdownChipsStatus();
               }
             }
           } else {
-            // FREE TYPING MODE (Backspace allowed)
-            curCharItem.domSpan.innerText = typedKey;
-            curCharItem.domSpan.className =
-              "char-span font-mono font-medium char-wrong";
+            curCharItem.domSpan.textContent = typedKey;
+            curCharItem.domSpan.className = CHAR_BASE_CLASS + " char-wrong";
             advanceCharPosition();
           }
 
@@ -1941,7 +1983,7 @@
         }
 
         updateWordRecognitionCard();
-        requestAnimationFrame(updateCaretAndPillPosition);
+        scheduleCaretUpdate();
       }
 
       function handleBackspace() {
@@ -1950,42 +1992,39 @@
         state.currentCharIndex--;
         const prevCharItem = state.flatChars[state.currentCharIndex];
         if (prevCharItem) {
-          prevCharItem.domSpan.className = "char-span font-mono font-medium";
-
+          prevCharItem.domSpan.className = CHAR_BASE_CLASS;
           if (state.mode === "mask") {
-            prevCharItem.domSpan.innerText = "_";
+            prevCharItem.domSpan.textContent = "_";
           } else if (state.mode === "first") {
-            prevCharItem.domSpan.innerText =
-              prevCharItem.charIndex === 0 ? prevCharItem.char : "_";
+            prevCharItem.domSpan.textContent = prevCharItem.charIndex === 0 ? prevCharItem.char : "_";
           } else {
-            prevCharItem.domSpan.innerText = prevCharItem.char;
+            prevCharItem.domSpan.textContent = prevCharItem.char;
           }
         }
 
-        // Sync currentWordIndex
         const curCharItem = state.flatChars[state.currentCharIndex];
-        if (curCharItem) {
+        if (curCharItem && state.currentWordIndex !== curCharItem.wordIndex) {
           state.currentWordIndex = curCharItem.wordIndex;
+          syncBreakdownChipsStatus();
         }
 
         updateMetrics();
         updateWordRecognitionCard();
-        requestAnimationFrame(updateCaretAndPillPosition);
+        scheduleCaretUpdate();
       }
 
       function advanceCharPosition() {
         state.currentCharIndex++;
         updateMetrics();
 
-        // Automatically consume trailing punctuation at end of words/sentences
+        // Consume trailing punctuation
         while (
           state.currentCharIndex < state.flatChars.length &&
           !state.flatChars[state.currentCharIndex].isWord
         ) {
           const punctItem = state.flatChars[state.currentCharIndex];
-          punctItem.domSpan.innerText = punctItem.char;
-          punctItem.domSpan.className =
-            "char-span font-mono font-medium char-correct";
+          punctItem.domSpan.textContent = punctItem.char;
+          punctItem.domSpan.className = CHAR_BASE_CLASS + " char-correct";
           state.currentCharIndex++;
         }
 
@@ -1993,10 +2032,9 @@
         if (nextCharItem) {
           if (state.currentWordIndex !== nextCharItem.wordIndex) {
             state.currentWordIndex = nextCharItem.wordIndex;
-            renderSentenceWordsBreakdown();
+            syncBreakdownChipsStatus();
           }
         } else {
-          // Sentence Complete!
           finishCurrentSentence();
         }
       }
@@ -2021,35 +2059,37 @@
 
         const elapsedMins = (Date.now() - state.startTime) / 60000 || 1;
         const wpm = Math.round(state.correctTyped / 5 / elapsedMins);
-        const acc = Math.round(
-          (state.correctTyped / (state.totalTyped || 1)) * 100,
-        );
+        const acc = Math.round((state.correctTyped / (state.totalTyped || 1)) * 100);
 
-        el.finalWpm.innerText = isNaN(wpm) ? 0 : wpm;
-        el.finalAcc.innerText = `${isNaN(acc) ? 100 : acc}%`;
-        el.finalHints.innerText = state.hintsUsedCount;
+        el.finalWpm.textContent = isNaN(wpm) ? 0 : wpm;
+        el.finalAcc.textContent = `${isNaN(acc) ? 100 : acc}%`;
+        el.finalHints.textContent = state.hintsUsedCount;
 
-        // Render Weak Words
-        el.weakWordsList.innerHTML = "";
-        el.weakWordsCount.innerText = `${state.weakWords.size} từ`;
+        el.weakWordsList.replaceChildren();
+        el.weakWordsCount.textContent = `${state.weakWords.size} từ`;
 
         if (state.weakWords.size === 0) {
-          el.weakWordsList.innerHTML =
-            '<span class="text-emerald-600 dark:text-emerald-400 font-bold">Xuất sắc! Bạn gõ đúng hoàn toàn không mắc lỗi nào!</span>';
+          const successSpan = document.createElement("span");
+          successSpan.className = "text-emerald-600 dark:text-emerald-400 font-bold";
+          successSpan.textContent = "Xuất sắc! Bạn gõ đúng hoàn toàn không mắc lỗi nào!";
+          el.weakWordsList.appendChild(successSpan);
         } else {
+          const fragment = document.createDocumentFragment();
           state.weakWords.forEach((word) => {
             const tag = document.createElement("span");
-            tag.className =
-              "px-2.5 py-1 bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/25 rounded-lg font-mono font-medium flex items-center gap-1";
+            tag.className = "px-2.5 py-1 bg-amber-500/15 text-amber-800 dark:text-amber-300 border border-amber-500/25 rounded-lg font-mono font-medium flex items-center gap-1";
             const vnMeaning = CORE_DICTIONARY[word] || "từ vựng";
+
             const english = document.createElement("span");
             english.textContent = word;
             const vietnamese = document.createElement("span");
             vietnamese.className = "text-[10px] opacity-75";
             vietnamese.textContent = `(${vnMeaning})`;
+
             tag.append(english, vietnamese);
-            el.weakWordsList.appendChild(tag);
+            fragment.appendChild(tag);
           });
+          el.weakWordsList.appendChild(fragment);
         }
 
         el.modalCompletion.classList.remove("hidden");
@@ -2059,17 +2099,15 @@
         if (!state.startTime) return;
         const elapsedMins = (Date.now() - state.startTime) / 60000 || 0.001;
         const wpm = Math.round(state.correctTyped / 5 / elapsedMins);
-        const acc = Math.round(
-          (state.correctTyped / (state.totalTyped || 1)) * 100,
-        );
+        const acc = Math.round((state.correctTyped / (state.totalTyped || 1)) * 100);
 
-        el.statWpm.innerText = isNaN(wpm) ? 0 : wpm;
-        el.statAcc.innerText = `${isNaN(acc) ? 100 : acc}%`;
-        el.statHints.innerText = state.hintsUsedCount;
+        el.statWpm.textContent = isNaN(wpm) ? 0 : wpm;
+        el.statAcc.textContent = `${isNaN(acc) ? 100 : acc}%`;
+        el.statHints.textContent = state.hintsUsedCount;
       }
 
       /**
-       * SHORTCUTS & HELPERS
+       * SHORTCUTS & HINTS
        */
       function triggerWordHint() {
         const currentSentence = state.sentences[state.currentSentenceIndex];
@@ -2081,14 +2119,13 @@
           state.hintsUsedCount++;
           const curCharItem = state.flatChars[state.currentCharIndex];
           if (curCharItem) {
-            state.weakWords.add(
-              curCharItem.wordText.toLowerCase().replace(/[^a-z0-9]/g, ""),
-            );
+            state.weakWords.add(curCharItem.wordText.toLowerCase().replace(/[^a-z0-9]/g, ""));
           }
           updateMetrics();
           updateCharSpansVisuals();
+          syncBreakdownChipsStatus();
           updateWordRecognitionCard();
-          requestAnimationFrame(updateCaretAndPillPosition);
+          scheduleCaretUpdate();
         }
       }
 
@@ -2102,40 +2139,34 @@
         if (wordObj) {
           wordObj.isRevealed = true;
           state.hintsUsedCount++;
-          state.weakWords.add(
-            curCharItem.wordText.toLowerCase().replace(/[^a-z0-9]/g, ""),
-          );
+          state.weakWords.add(curCharItem.wordText.toLowerCase().replace(/[^a-z0-9]/g, ""));
 
           while (
             state.currentCharIndex < state.flatChars.length &&
-            state.flatChars[state.currentCharIndex].wordIndex ===
-              state.currentWordIndex
+            state.flatChars[state.currentCharIndex].wordIndex === state.currentWordIndex
           ) {
             const c = state.flatChars[state.currentCharIndex];
-            c.domSpan.innerText = c.char;
-            c.domSpan.className =
-              "char-span font-mono font-medium char-correct";
+            c.domSpan.textContent = c.char;
+            c.domSpan.className = CHAR_BASE_CLASS + " char-correct";
             state.correctTyped++;
             state.totalTyped++;
             state.currentCharIndex++;
           }
 
-          // Consume trailing punctuation
           while (
             state.currentCharIndex < state.flatChars.length &&
             !state.flatChars[state.currentCharIndex].isWord
           ) {
             const punct = state.flatChars[state.currentCharIndex];
-            punct.domSpan.innerText = punct.char;
-            punct.domSpan.className =
-              "char-span font-mono font-medium char-correct";
+            punct.domSpan.textContent = punct.char;
+            punct.domSpan.className = CHAR_BASE_CLASS + " char-correct";
             state.currentCharIndex++;
           }
 
           const nextCharItem = state.flatChars[state.currentCharIndex];
           if (nextCharItem) {
             state.currentWordIndex = nextCharItem.wordIndex;
-            renderSentenceWordsBreakdown();
+            syncBreakdownChipsStatus();
           } else {
             finishCurrentSentence();
             return;
@@ -2143,19 +2174,20 @@
 
           updateMetrics();
           updateWordRecognitionCard();
-          requestAnimationFrame(updateCaretAndPillPosition);
+          scheduleCaretUpdate();
         }
       }
 
-      /** Map a browser selection of letters/underscores to the REAL essay content.
-       * Never replace masked glyphs in the DOM: revealing happens only in the temporary audio toolbar.
+      /**
+       * SELECTION AUDIO HELPER
        */
       function getTypingSelectionText(selection) {
         if (!selection || !selection.rangeCount || selection.isCollapsed) return "";
         const range = selection.getRangeAt(0);
         if (!el.display.contains(range.startContainer) || !el.display.contains(range.endContainer)) return "";
         const touched = [];
-        for (const item of state.renderedSpeechChars) {
+        for (let i = 0; i < state.renderedSpeechChars.length; i++) {
+          const item = state.renderedSpeechChars[i];
           if (range.intersectsNode(item.domSpan)) touched.push(item);
         }
         if (!touched.length) return "";
@@ -2197,9 +2229,9 @@
         utterance.lang = lang;
         utterance.rate = rate;
         const voices = synth.getVoices();
-        const exactVoice = voices.find(v => v.lang.toLowerCase() === lang.toLowerCase());
+        const exactVoice = voices.find((v) => v.lang.toLowerCase() === lang.toLowerCase());
         if (exactVoice) utterance.voice = exactVoice;
-        utterance.onerror = event => {
+        utterance.onerror = (event) => {
           if (event.error && !["canceled", "interrupted"].includes(event.error)) {
             showToast("Không phát được giọng đọc. Kiểm tra cài đặt âm thanh của trình duyệt.");
           }
@@ -2215,14 +2247,18 @@
       function syncSelectionToolbar() {
         const selection = window.getSelection();
         const text = getTypingSelectionText(selection);
-        if (!text) { hideSelectionToolbar(); return; }
+        if (!text) {
+          hideSelectionToolbar();
+          return;
+        }
         state.selectedSpeechText = text;
         el.selectionPreview.textContent = text;
         el.selectionPreview.title = text;
         el.selectionToolbar.classList.remove("hidden");
+
         const range = selection.getRangeAt(0);
         const rectangles = [...range.getClientRects()];
-        const rect = rectangles.find(r => r.width > 0 && r.height > 0) || range.getBoundingClientRect();
+        const rect = rectangles.find((r) => r.width > 0 && r.height > 0) || range.getBoundingClientRect();
         const toolbarWidth = el.selectionToolbar.offsetWidth || 360;
         const toolbarHeight = el.selectionToolbar.offsetHeight || 80;
         const rawLeft = rect.left + rect.width / 2 - toolbarWidth / 2;
@@ -2230,6 +2266,7 @@
         let top = rect.top - toolbarHeight - 12;
         if (top < 12) top = rect.bottom + 12;
         top = Math.min(Math.max(12, top), Math.max(12, window.innerHeight - toolbarHeight - 12));
+
         el.selectionToolbar.style.left = `${left}px`;
         el.selectionToolbar.style.top = `${top}px`;
       }
@@ -2243,33 +2280,36 @@
       }
 
       /**
-       * ZERO-CLICK GLOBAL KEYBOARD EVENT LISTENERS
+       * EVENT DELEGATION & LISTENERS
        */
       function setupEventListeners() {
-        // Global keydown handler (No click needed to type!)
+        // High-Performance Global Keydown Handler
         window.addEventListener("keydown", (e) => {
-          // If focus is inside text input/textarea/modal, skip engine handling
           const target = e.target instanceof Element ? e.target : document.activeElement;
           const activeTag = document.activeElement.tagName;
-          const liveSelection = window.getSelection();
+
           if (e.key === "Escape" && !el.selectionToolbar.classList.contains("hidden")) {
             e.preventDefault();
             window.getSelection()?.removeAllRanges();
             hideSelectionToolbar();
             return;
           }
+
+          const liveSelection = window.getSelection();
+          const hasSelection = liveSelection && !liveSelection.isCollapsed && !!getTypingSelectionText(liveSelection);
+
           if (
             activeTag === "INPUT" ||
             activeTag === "TEXTAREA" ||
             !el.modalCustom.classList.contains("hidden") ||
             !el.modalCompletion.classList.contains("hidden") ||
             target.closest("#selection-audio-toolbar, select, [contenteditable='true']") ||
-            !!getTypingSelectionText(liveSelection)
+            hasSelection
           ) {
             return;
           }
 
-          // Keyboard Shortcuts
+          // Shortcuts
           if (e.key === "Tab") {
             e.preventDefault();
             triggerWordHint();
@@ -2301,36 +2341,35 @@
             changeSentenceOffset(1);
             return;
           }
-
           if (e.key === "Backspace") {
             e.preventDefault();
             handleBackspace();
             return;
           }
 
-          // Process standard single printable characters
+          // Single printable characters
           if (e.key.length === 1 && !e.ctrlKey && !e.altKey && !e.metaKey) {
             e.preventDefault();
             handleKeyInput(e.key);
           }
         });
 
-        // The typing arena is also the pronunciation selection surface.
-        // Never steal focus or clear the range when starting a drag inside the text.
-        el.wrapper.addEventListener("pointerdown", event => {
+        // Typing wrapper interactions
+        el.wrapper.addEventListener("pointerdown", (event) => {
           if (event.target.closest("button") || event.target.closest("#essay-display")) return;
           window.getSelection()?.removeAllRanges();
           hideSelectionToolbar();
           el.wrapper.focus({ preventScroll: true });
         });
+
         el.display.addEventListener("pointerup", () => {
           queueSelectionSync();
-          // Clicking without dragging still resumes normal global keyboard input.
           if (!window.getSelection()?.toString().trim()) {
             el.wrapper.focus({ preventScroll: true });
           }
         });
-        el.display.addEventListener("dblclick", event => {
+
+        el.display.addEventListener("dblclick", (event) => {
           const wordNode = event.target instanceof Element ? event.target.closest(".word-wrapper") : event.target.parentElement?.closest(".word-wrapper");
           if (!wordNode) return;
           const sent = state.sentences[Number(wordNode.dataset.sentIdx)];
@@ -2339,16 +2378,17 @@
           const spans = wordNode.querySelectorAll(".char-span");
           if (!spans.length) return;
           const range = document.createRange();
-          range.setStart(spans[0].firstChild, 0);
-          range.setEnd(spans[spans.length - 1].firstChild, 1);
+          range.setStart(spans[0].firstChild || spans[0], 0);
+          range.setEnd(spans[spans.length - 1].firstChild || spans[spans.length - 1], 1);
           const selection = window.getSelection();
           selection.removeAllRanges();
           selection.addRange(range);
           queueSelectionSync();
         });
+
         el.display.addEventListener("touchend", () => setTimeout(queueSelectionSync, 120), { passive: true });
-        // Click outside the selected text to resume typing.
-        document.addEventListener("pointerdown", event => {
+
+        document.addEventListener("pointerdown", (event) => {
           if (!event.target.closest("#typing-wrapper, #selection-audio-toolbar")) {
             const selection = window.getSelection();
             if (getTypingSelectionText(selection)) selection.removeAllRanges();
@@ -2356,49 +2396,110 @@
           }
         });
 
+        // Event delegation on wordsBreakdownContainer (O(1) listener)
+        el.wordsBreakdownContainer.addEventListener("click", (event) => {
+          const chipEl = event.target.closest("[data-word-idx]");
+          if (!chipEl) return;
+          const wordIdx = Number(chipEl.dataset.wordIdx);
+          const cleanText = chipEl.dataset.cleanText;
+          const curSentence = state.sentences[state.currentSentenceIndex];
+          const wObj = curSentence?.words[wordIdx];
+          if (wObj) {
+            speakText(cleanText);
+            wObj.isRevealed = true;
+            updateCharSpansVisuals();
+            syncBreakdownChipsStatus();
+            updateWordRecognitionCard();
+            scheduleCaretUpdate();
+          }
+        });
+
+        // Pronunciation Accent
         el.readerAccent.addEventListener("click", () => {
           state.speechLocale = state.speechLocale === "en-US" ? "en-GB" : "en-US";
           el.readerAccentLabel.textContent = state.speechLocale === "en-GB" ? "UK" : "US";
-          try { localStorage.setItem("essay_speech_locale", state.speechLocale); } catch (_) {}
+          try {
+            localStorage.setItem("essay_speech_locale", state.speechLocale);
+          } catch (_) {}
         });
+
         el.selectionPlay.addEventListener("click", () => speakText(state.selectedSpeechText));
         el.selectionPlaySlow.addEventListener("click", () => speakText(state.selectedSpeechText, state.speechLocale, 0.7));
         el.selectionStop.addEventListener("click", () => {
           if ("speechSynthesis" in window) window.speechSynthesis.cancel();
         });
         el.selectionClose.addEventListener("click", hideSelectionToolbar);
-        // Preserve highlighted words when users press the floating speaker button.
-        el.selectionToolbar.addEventListener("pointerdown", event => {
+
+        el.selectionToolbar.addEventListener("pointerdown", (event) => {
           if (event.target.closest("button")) event.preventDefault();
         });
+
         document.addEventListener("selectionchange", queueSelectionSync);
-        window.addEventListener("resize", () => {
-          if (!el.selectionToolbar.classList.contains("hidden")) queueSelectionSync();
-        });
-        window.addEventListener("scroll", () => {
-          if (!el.selectionToolbar.classList.contains("hidden")) queueSelectionSync();
-        }, { passive: true, capture: true });
+
+        // Segmented Active State Helper
+        function setActiveSegmentBtn(group, activeBtn) {
+          const activeClasses = ["active", "bg-white", "dark:bg-slate-600", "shadow-sm", "text-slate-800", "dark:text-white"];
+          group.forEach((btn) => btn.classList.remove(...activeClasses));
+          activeBtn.classList.add(...activeClasses);
+        }
 
         // Mode Switches
-        el.btnModeGhost.addEventListener("click", () => setMode("ghost"));
-        el.btnModeFirst.addEventListener("click", () => setMode("first"));
-        el.btnModeMask.addEventListener("click", () => setMode("mask"));
+        el.btnModeGhost.addEventListener("click", () => {
+          state.mode = "ghost";
+          setActiveSegmentBtn([el.btnModeGhost, el.btnModeFirst, el.btnModeMask], el.btnModeGhost);
+          updateCharSpansVisuals();
+          syncBreakdownChipsStatus();
+          updateWordRecognitionCard();
+          scheduleCaretUpdate();
+        });
+
+        el.btnModeFirst.addEventListener("click", () => {
+          state.mode = "first";
+          setActiveSegmentBtn([el.btnModeGhost, el.btnModeFirst, el.btnModeMask], el.btnModeFirst);
+          updateCharSpansVisuals();
+          syncBreakdownChipsStatus();
+          updateWordRecognitionCard();
+          scheduleCaretUpdate();
+        });
+
+        el.btnModeMask.addEventListener("click", () => {
+          state.mode = "mask";
+          setActiveSegmentBtn([el.btnModeGhost, el.btnModeFirst, el.btnModeMask], el.btnModeMask);
+          updateCharSpansVisuals();
+          syncBreakdownChipsStatus();
+          updateWordRecognitionCard();
+          scheduleCaretUpdate();
+        });
 
         // Error Mode Switches
-        el.btnErrStop.addEventListener("click", () => setErrMode("stop"));
-        el.btnErrFree.addEventListener("click", () => setErrMode("free"));
+        el.btnErrStop.addEventListener("click", () => {
+          state.errMode = "stop";
+          setActiveSegmentBtn([el.btnErrStop, el.btnErrFree], el.btnErrStop);
+        });
+
+        el.btnErrFree.addEventListener("click", () => {
+          state.errMode = "free";
+          setActiveSegmentBtn([el.btnErrStop, el.btnErrFree], el.btnErrFree);
+        });
 
         // View Mode Switches
-        el.btnViewSentence.addEventListener("click", () => setView("sentence"));
-        el.btnViewFull.addEventListener("click", () => setView("full"));
+        el.btnViewSentence.addEventListener("click", () => {
+          state.view = "sentence";
+          setActiveSegmentBtn([el.btnViewSentence, el.btnViewFull], el.btnViewSentence);
+          buildPreRenderedDOM();
+        });
+
+        el.btnViewFull.addEventListener("click", () => {
+          state.view = "full";
+          setActiveSegmentBtn([el.btnViewSentence, el.btnViewFull], el.btnViewFull);
+          buildPreRenderedDOM();
+        });
 
         // Action Buttons
         el.btnWordHint.addEventListener("click", triggerWordHint);
         el.btnFillWord.addEventListener("click", fillCurrentWord);
         el.btnResetSentence.addEventListener("click", resetCurrentSentence);
-        el.btnPrevSent.addEventListener("click", () =>
-          changeSentenceOffset(-1),
-        );
+        el.btnPrevSent.addEventListener("click", () => changeSentenceOffset(-1));
         el.btnNextSent.addEventListener("click", () => changeSentenceOffset(1));
 
         el.btnSpeakSentence.addEventListener("click", () => {
@@ -2408,10 +2509,7 @@
 
         el.btnSpeakWord.addEventListener("click", () => {
           const currentSentence = state.sentences[state.currentSentenceIndex];
-          if (
-            currentSentence &&
-            currentSentence.words[state.currentWordIndex]
-          ) {
+          if (currentSentence && currentSentence.words[state.currentWordIndex]) {
             speakText(currentSentence.words[state.currentWordIndex].text);
           }
         });
@@ -2421,37 +2519,25 @@
           if (currentSentence) speakText(currentSentence.translation, "vi-VN");
         });
 
-        // Speech Rate Toggle
         el.btnSpeakRate.addEventListener("click", () => {
-          state.speechRate =
-            state.speechRate === 0.9
-              ? 0.7
-              : state.speechRate === 0.7
-                ? 1.0
-                : 0.9;
-          el.rateLabel.innerText = `${state.speechRate}x`;
+          state.speechRate = state.speechRate === 0.9 ? 0.7 : state.speechRate === 0.7 ? 1.0 : 0.9;
+          el.rateLabel.textContent = `${state.speechRate}x`;
         });
 
         el.btnToggleWordPeek.addEventListener("click", () => {
           const currentSentence = state.sentences[state.currentSentenceIndex];
-          if (
-            currentSentence &&
-            currentSentence.words[state.currentWordIndex]
-          ) {
+          if (currentSentence && currentSentence.words[state.currentWordIndex]) {
             currentSentence.words[state.currentWordIndex].isRevealed = true;
             updateCharSpansVisuals();
+            syncBreakdownChipsStatus();
             updateWordRecognitionCard();
-            requestAnimationFrame(updateCaretAndPillPosition);
+            scheduleCaretUpdate();
           }
         });
 
-        // Modal & Essay Manager
-        el.btnOpenEssayModal.addEventListener("click", () =>
-          el.modalCustom.classList.remove("hidden"),
-        );
-        el.btnCloseModal.addEventListener("click", () =>
-          el.modalCustom.classList.add("hidden"),
-        );
+        // Modals & Essay Library
+        el.btnOpenEssayModal.addEventListener("click", () => el.modalCustom.classList.remove("hidden"));
+        el.btnCloseModal.addEventListener("click", () => el.modalCustom.classList.add("hidden"));
 
         el.btnLoadDefault.addEventListener("click", () => {
           el.inputEssayTitle.value = DEFAULT_ESSAY_TITLE;
@@ -2468,18 +2554,11 @@
           if (!enVal) {
             el.inputCustomEn.focus();
             el.inputCustomEn.classList.add("ring-2", "ring-rose-500");
-            setTimeout(
-              () =>
-                el.inputCustomEn.classList.remove("ring-2", "ring-rose-500"),
-              1500,
-            );
+            setTimeout(() => el.inputCustomEn.classList.remove("ring-2", "ring-rose-500"), 1500);
             return;
           }
 
-          const vnArray = vnVal
-            ? vnVal.split("\n").filter((l) => l.trim().length > 0)
-            : [];
-
+          const vnArray = vnVal ? vnVal.split("\n").filter((l) => l.trim().length > 0) : [];
           const newEssay = {
             id: "essay-" + Date.now(),
             title,
@@ -2499,91 +2578,6 @@
         });
 
         el.btnThemeToggle.addEventListener("click", toggleTheme);
-      }
-
-      function setMode(modeName) {
-        state.mode = modeName;
-        [el.btnModeGhost, el.btnModeFirst, el.btnModeMask].forEach((btn) =>
-          btn.classList.remove(
-            "active",
-            "bg-white",
-            "dark:bg-slate-600",
-            "shadow-sm",
-            "text-slate-800",
-            "dark:text-white",
-          ),
-        );
-
-        const targetBtn =
-          modeName === "ghost"
-            ? el.btnModeGhost
-            : modeName === "first"
-              ? el.btnModeFirst
-              : el.btnModeMask;
-        targetBtn.classList.add(
-          "active",
-          "bg-white",
-          "dark:bg-slate-600",
-          "shadow-sm",
-          "text-slate-800",
-          "dark:text-white",
-        );
-
-        updateCharSpansVisuals();
-        updateWordRecognitionCard();
-        requestAnimationFrame(updateCaretAndPillPosition);
-      }
-
-      function setErrMode(errModeName) {
-        state.errMode = errModeName;
-        [el.btnErrStop, el.btnErrFree].forEach((btn) =>
-          btn.classList.remove(
-            "active",
-            "bg-white",
-            "dark:bg-slate-600",
-            "shadow-sm",
-            "text-slate-800",
-            "dark:text-white",
-          ),
-        );
-
-        const targetBtn =
-          errModeName === "stop" ? el.btnErrStop : el.btnErrFree;
-        targetBtn.classList.add(
-          "active",
-          "bg-white",
-          "dark:bg-slate-600",
-          "shadow-sm",
-          "text-slate-800",
-          "dark:text-white",
-        );
-      }
-
-      function setView(viewName) {
-        state.view = viewName;
-        [el.btnViewSentence, el.btnViewFull].forEach((btn) =>
-          btn.classList.remove(
-            "active",
-            "bg-white",
-            "dark:bg-slate-600",
-            "shadow-sm",
-            "text-slate-800",
-            "dark:text-white",
-          ),
-        );
-
-        const targetBtn =
-          viewName === "sentence" ? el.btnViewSentence : el.btnViewFull;
-        targetBtn.classList.add(
-          "active",
-          "bg-white",
-          "dark:bg-slate-600",
-          "shadow-sm",
-          "text-slate-800",
-          "dark:text-white",
-        );
-
-        buildPreRenderedDOM();
       }
 
       function changeSentenceOffset(offset) {
@@ -2609,80 +2603,70 @@
       }
 
       function renderSavedEssaysList() {
-        el.essaySavedList.innerHTML = "";
+        el.essaySavedList.replaceChildren();
+        const fragment = document.createDocumentFragment();
+
         state.savedEssays.forEach((essay) => {
           const btn = document.createElement("button");
-          btn.className =
-            "px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-200 hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition flex items-center gap-2 shadow-2xs";
+          btn.className = "px-3.5 py-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 text-xs font-bold text-slate-700 dark:text-slate-200 hover:border-indigo-500 hover:text-indigo-600 dark:hover:text-indigo-400 transition flex items-center gap-2 shadow-2xs";
+
           const icon = document.createElement("i");
           icon.className = "fa-solid fa-file-lines text-indigo-500";
           const label = document.createElement("span");
           label.textContent = essay.title;
+
           btn.append(icon, label);
           btn.addEventListener("click", () => {
             loadEssayObject(essay);
             el.modalCustom.classList.add("hidden");
           });
-          el.essaySavedList.appendChild(btn);
+          fragment.appendChild(btn);
         });
+
+        el.essaySavedList.appendChild(fragment);
       }
 
       /**
-       * MYMEMORY TRANSLATION FALLBACK
+       * PARALLEL TRANSLATION FETCH
        */
       async function handleAutoTranslate() {
         const enText = el.inputCustomEn.value.trim();
         if (!enText) {
           el.inputCustomEn.focus();
           el.inputCustomEn.classList.add("ring-2", "ring-rose-500");
-          setTimeout(
-            () => el.inputCustomEn.classList.remove("ring-2", "ring-rose-500"),
-            1500,
-          );
+          setTimeout(() => el.inputCustomEn.classList.remove("ring-2", "ring-rose-500"), 1500);
           return;
         }
 
-        el.btnAutoTranslate.innerHTML =
-          '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Đang dịch...';
+        const originalBtnText = el.btnAutoTranslate.innerHTML;
+        el.btnAutoTranslate.innerHTML = '<i class="fa-solid fa-spinner fa-spin mr-1"></i>Đang dịch song song...';
 
         const sentences = enText.match(/[^.!?]+(?:[.!?]+|$)/g) || [enText];
-        const translatedSentences = [];
 
-        for (let sent of sentences) {
-          try {
-            const res = await fetch(
-              `https://api.mymemory.translated.net/get?q=${encodeURIComponent(sent.trim())}&langpair=en|vi`,
-            );
-            const data = await res.json();
-            if (data && data.responseData && data.responseData.translatedText) {
-              translatedSentences.push(data.responseData.translatedText);
-            } else {
-              translatedSentences.push(sent.trim());
+        try {
+          const translatePromises = sentences.map(async (sent) => {
+            const trimmed = sent.trim();
+            if (!trimmed) return "";
+            try {
+              const res = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(trimmed)}&langpair=en|vi`);
+              const data = await res.json();
+              if (data && data.responseData && data.responseData.translatedText) {
+                return data.responseData.translatedText;
+              }
+              return trimmed;
+            } catch (err) {
+              return trimmed;
             }
-          } catch (err) {
-            translatedSentences.push(sent.trim());
-          }
+          });
+
+          const translatedSentences = await Promise.all(translatePromises);
+          el.inputCustomVn.value = translatedSentences.join("\n");
+        } finally {
+          el.btnAutoTranslate.innerHTML = originalBtnText;
         }
-
-        el.inputCustomVn.value = translatedSentences.join("\n");
-        el.btnAutoTranslate.innerHTML =
-          '<i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Tự động tách câu & Dịch Tiếng Việt';
-      }
-
-      function updateThemeFromSystem() {
-        if (
-          window.matchMedia &&
-          window.matchMedia("(prefers-color-scheme: dark)").matches
-        ) {
-          document.documentElement.classList.add("dark");
-        }
-      }
-
-      function toggleTheme() {
-        document.documentElement.classList.toggle("dark");
       }
 
       window.addEventListener("DOMContentLoaded", initApp);
     </script>
-  </body>
+</body>
 </html>
